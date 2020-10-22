@@ -6,8 +6,14 @@ import sys
 
 # Required for autodoc to find the modules to document, since they are not in
 # the docs directory.
-sys.path.insert(0, os.path.abspath('.'))
+# del sys.path[1:3]
+print("conf.py, sys.path =", sys.path)  # DEBUG
+print("conf.py, ../.. =", os.path.abspath('../..'))  # DEBUG
+# sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('../../'))
+print("conf.py, sys.path =", sys.path)  # DEBUG
+
+import business_plans
 
 extensions = [
     'sphinx.ext.autodoc',
