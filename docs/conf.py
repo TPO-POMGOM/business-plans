@@ -8,12 +8,12 @@ import sys
 # the docs directory.
 # del sys.path[1:3]
 print("conf.py, sys.path =", sys.path)  # DEBUG
-print("conf.py, ../.. =", os.path.abspath('../..'))  # DEBUG
+print("conf.py, . =", os.path.abspath('.'))  # DEBUG
 # sys.path.insert(0, os.path.abspath('.'))
-sys.path.insert(0, os.path.abspath('../../'))
+sys.path.insert(0, os.path.abspath('.'))
 print("conf.py, sys.path =", sys.path)  # DEBUG
 
-import business_plans
+# import business_plans
 
 extensions = [
     'sphinx.ext.autodoc',
