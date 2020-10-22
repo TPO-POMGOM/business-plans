@@ -2,38 +2,38 @@
 Module **bp**
 =============
 
-.. automodule:: bp
+.. automodule:: business_plans.bp
 
 
-Function BP
------------
+Function **BP**
+----------------
 
 .. autofunction:: BP
 
 
-Class BPAccessor
-----------------
+Class **BPAccessor**
+--------------------
 
 .. autoclass:: BPAccessor
    :members:
 
 
-Class ExternalAssumption
-----------------------
+Class **ExternalAssumption**
+----------------------------
 
 .. autoclass:: ExternalAssumption
    :members:
 
 
-Class HistoryBasedAssumption
-----------------------------
+Class **HistoryBasedAssumption**
+--------------------------------
 
 .. autoclass:: HistoryBasedAssumption
    :members:
 
 
-Class UpdateLink
-----------------
+Class **UpdateLink**
+--------------------
 
 .. autoclass:: UpdateLink
    :members:
@@ -49,31 +49,31 @@ Data Types
    :annotation:
 
 
-Simulator function percent_of()
--------------------------------
+Simulator function **percent_of()**
+-----------------------------------
 
 .. autofunction:: percent_of
 
 
-Simulator function actualise()
-------------------------------
+Simulator function **actualise()**
+----------------------------------
 
 .. autofunction:: actualise
 
 
-Simulator function actualise_and_cumulate()
--------------------------------------------
+Simulator function **actualise_and_cumulate()**
+-----------------------------------------------
 
 .. autofunction:: actualise_and_cumulate
 
 
-Function min()
---------------
+Function **min()**
+------------------
 
 .. autofunction:: min
 
 
-Function max()
---------------
+Function **max()**
+-------------------
 
 .. autofunction:: max

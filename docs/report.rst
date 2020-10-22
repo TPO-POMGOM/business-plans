@@ -2,60 +2,60 @@
 Module **report**
 =================
 
-.. automodule:: report
+.. automodule:: business_plans.report
 
 
-Class Report
-------------
+Class **Report**
+----------------
 
 .. autoclass:: Report
    :members:
 
 
-Class BPStatus
---------------
+Class **BPStatus**
+------------------
 
 .. autoclass:: BPStatus
    :members:
 
 
-Class StackedBarBPChart
------------------------
+Class **StackedBarBPChart**
+---------------------------
 
 .. autoclass:: StackedBarBPChart
    :members:
 
 
-Class LineBPChart
------------------
+Class **LineBPChart**
+---------------------
 
 .. autoclass:: LineBPChart
    :members:
 
 
-Class CompareBPsLineChart
--------------------------
+Class **CompareBPsLineChart**
+-----------------------------
 
 .. autoclass:: CompareBPsLineChart
    :members:
 
 
-Class BPChart
--------------
+Class **BPChart**
+-----------------
 
 .. autoclass:: BPChart
    :members:
 
 
-Class Chart
------------
+Class **Chart**
+---------------
 
 .. autoclass:: Chart
    :members:
 
 
-Class Element
--------------
+Class **Element**
+-----------------
 
 .. autoclass:: Element
    :members:

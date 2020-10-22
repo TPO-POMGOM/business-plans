@@ -1,9 +1,9 @@
-bp -- modeling business plans using Pandas
-==========================================
+Package **business_plans** -- Modeling and managing business plans
+==================================================================
 
 .. toctree::
    :maxdepth: 3
    :numbered: 2
 
-   bp
-   report
+   getting_started
+   api_reference

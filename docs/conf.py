@@ -3,11 +3,11 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.viewcode',
 ]
-# html_theme = 'nature'
-html_theme = 'classic'
-html_theme_options = {
-    'stickysidebar': True
-}
+html_theme = 'nature'
+# html_theme = 'classic'
+# html_theme_options = {
+#     'stickysidebar': True  # Only works with html_theme = 'classic'
+# }
 html_last_updated_fmt = '%d-%b-%Y'
 
 # Napoleon settings

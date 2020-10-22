@@ -23,7 +23,7 @@ from typing_extensions import Literal
 
 import pandas as pd
 
-from bp.bp import ExternalAssumption, HistoryBasedAssumption
+from business_plans.bp import ExternalAssumption, HistoryBasedAssumption
 
 
 __all__ = [
