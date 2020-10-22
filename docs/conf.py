@@ -7,7 +7,7 @@ import sys
 # Required for autodoc to find the modules to document, since they are not in
 # the docs directory.
 sys.path.insert(0, os.path.abspath('.'))
-sys.path.insert(0, os.path.abspath('../'))
+sys.path.insert(0, os.path.abspath('../../'))
 
 extensions = [
     'sphinx.ext.autodoc',
