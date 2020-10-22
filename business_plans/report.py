@@ -19,9 +19,9 @@ from datetime import date
 import html
 from pathlib import Path
 from typing import List, Union
-from typing_extensions import Literal
 
 import pandas as pd
+from typing_extensions import Literal
 
 from business_plans.bp import ExternalAssumption, HistoryBasedAssumption
 
