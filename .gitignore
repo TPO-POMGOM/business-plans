@@ -1,6 +1,6 @@
 __pycache__/
 BP Olivier - before move to Admin volume.py
-doctrees/
-html/
+docs/doctrees/
+docs/html/
 *.sublime-project
 *.sublime-workspace
