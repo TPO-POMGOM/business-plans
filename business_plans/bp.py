@@ -12,14 +12,20 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date, datetime
+import os
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
-import win32con
-from win32ui import MessageBox
 
+print("Importing bp.py")
+if os.environ.get('READTHEDOCS', 'False') != 'True':
+    print("...importing win32xx")
+    import win32con
+    from win32ui import MessageBox
+else:
+    print("...skipping win32xx")
 
 __all__ = [
     'actualise',
