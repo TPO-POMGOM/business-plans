@@ -19,13 +19,9 @@ from typing import Callable, Dict, List, Optional, Union
 import numpy as np
 import pandas as pd
 
-print("Importing bp.py")
 if os.environ.get('READTHEDOCS', 'False') != 'True':
-    print("...importing win32xx")
     import win32con
     from win32ui import MessageBox
-else:
-    print("...skipping win32xx")
 
 __all__ = [
     'actualise',
@@ -225,10 +221,17 @@ class BPAccessor:
         plan line, see example above.
 
     assumptions: `List[` :data:`Assumption` `]`, defaults to ``[]``
-        Status of each of the assumptions on which the business plan is based,
-        represented as a list of :class:`ExternalAssumption` and
-        :class:`HistoryBasedAssumption` objects. Assumptions are declared
-        using methods :func:`assumption` and :func:`history_based_assumption`. """
+        Assumptions on which the business plan is based. Assumptions are
+        declared by appending objects of class :class:`ExternalAssumption` or
+        class :class:`HistoryBasedAssumption` to `assumptions`. For instance::
+
+          my_bp.bp.assumptions.append(ExternalAssumption(
+              name="Some assumption",
+              last_update=date(2020, 10, 12),
+              update_every_x_year=2,
+              update_instructions="See {source} for more information."
+              update_links={'source': UpdateLink("reference", "http://ref.com")})
+"""
 
     def __init__(self, df: pd.DataFrame):
         self._df = df
