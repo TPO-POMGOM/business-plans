@@ -4,10 +4,10 @@
 
 - 9-Avr-2019 TPO -- Created this module.
 
-- 27-Sep-2020 TPO -- Created v2, replacing class ``BP`` with ``pandas.DataFrame``
-  and class ``BPTimeSeries`` with ``pandas.Series``.
+- 27-Sep-2020 TPO -- Created v0.2, replacing class ``BP`` with
+  ``pandas.DataFrame`` and class ``BPTimeSeries`` with ``pandas.Series``.
 
-- 18-Oct-2020 TPO -- Initial release of v2. """
+- 18-Oct-2020 TPO -- Initial release of v0.2. """
 
 from __future__ import annotations
 from dataclasses import dataclass, field
