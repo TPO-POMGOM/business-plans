@@ -216,14 +216,15 @@ class BPAccessor:
     Attributes
     ----------
 
-    name: `str`, defaults to ``""``
+    name: `str`, initial value is ``""``
         Name of the business plan line. It can be used to access the business
         plan line, see example above.
 
-    assumptions: `List[` :data:`Assumption` `]`, defaults to ``[]``
+    assumptions: `List[` :data:`Assumption` `]`, initial value is ``[]``
         Assumptions on which the business plan is based. Assumptions are
         declared by appending objects of class :class:`ExternalAssumption` or
-        class :class:`HistoryBasedAssumption` to `assumptions`. For instance::
+        class :class:`HistoryBasedAssumption` to attribute `assumptions`. For
+        instance::
 
           my_bp.bp.assumptions.append(ExternalAssumption(
               name="Some assumption",
