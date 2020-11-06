@@ -15,10 +15,10 @@
 
 
 from __future__ import annotations
-from datetime import date
+from datetime import date, datetime, time
 import html
 from pathlib import Path
-from typing import List, Union
+from typing import Any, Callable, List, Union
 
 import pandas as pd
 from typing_extensions import Literal
@@ -286,6 +286,7 @@ class BPChart(Element):
                  line_arg: Union[str, List[str]],
                  chart_type: Literal['line', 'stacked bar'] = 'line',
                  title: str = "",
+                 label_format: Union[str, Callable[[Any], str]] = '{:,.0f}',
                  offset_x: int = 0,
                  scale: float = 1.0,
                  precision: int = 0,
@@ -321,28 +322,43 @@ class BPChart(Element):
         if isinstance(bp_arg, pd.DataFrame) and isinstance(line_arg, list):
             _bp = bp_arg
             _lines = line_arg
-            bp_start = _bp.bp.start
-            bp_end = _bp.bp.end
+            bp_index = _bp.index
+            # bp_start = _bp.bp.start
+            # bp_end = _bp.bp.end
             data = {line: (_bp[line] * scale).round(precision) for line in _lines}
             datasets = [dataset_js(i, line) for i, line in enumerate(_lines)]
             chart_lines = [(_bp, line, _bp[line]) for line in reversed(_lines)]
         elif isinstance(bp_arg, list) and isinstance(line_arg, str):
             _bps = bp_arg
             _line = line_arg
-            bp_start = _bps[0].bp.start
-            bp_end = _bps[0].bp.end
+            bp_index = _bp[0].index
+            # bp_start = _bps[0].bp.start
+            # bp_end = _bps[0].bp.end
             data = {bp.bp.name: (bp[_line] * scale).round(precision) for bp in _bps}
             datasets = [dataset_js(i, bp.bp.name) for i, bp in enumerate(_bps)]
             chart_lines = [(bp, bp.bp.name, bp[_line]) for bp in reversed(_bps)]
         else:
             raise TypeError("Invalid types for 'bp_arg' and 'line_arg'")
-        labels = f'{list(range(bp_start + offset_x, bp_end + 1 + offset_x))}'
-
+        if isinstance(label_format, str):
+            labels = []
+            for label in bp_index:
+                if (isinstance(label, date)
+                        or isinstance(label, datetime)
+                        or isinstance(label, time)):
+                    labels.append(label.strftime(label_format))
+                else:
+                    labels.append(label_format.format(label))
+            # labels = f'{list(range(bp_start + offset_x, bp_end + 1 + offset_x))}'
+        elif callable(label_format):
+            labels = [label_format(label) for label in bp_index]
+        else:
+            raise TypeError("Argument label_format should be str or "
+                            "Callable[[Any], str]")
         stacked = 'true' if chart_type == 'stacked bar' else 'false'
         chart = Chart(datasets=",\n".join(datasets),
                       title=title,
                       chart_type='line' if chart_type == 'line' else 'bar',
-                      labels=labels,
+                      labels=str(labels),
                       width=width,
                       height=height,
                       legend_position=legend_position,
@@ -375,8 +391,8 @@ class BPChart(Element):
         <thead>
             <tr>
                 <th>{html.escape(x_label)}</th>""")
-            for i in range(bp_start + offset_x, bp_end + 1 + offset_x):
-                table.append(f"                <th>{i}</th>")
+            for label in labels:
+                table.append(f"                <th>{label}</th>")
             table.append("""\
             </tr>
         </thead>
@@ -648,10 +664,10 @@ class BPStatus(Element):
                         year=assumption.last_update.year)
                     + chart)
         for name in bp:
-            years_of_history = bp.bp.years_of_history(name)
+            years_of_history = bp.bp.years_of_history(name)  # TODO: rename
             if years_of_history:
                 last_required_year = date.today().year - bp.bp.max_history_lag(name)
-                last_history_year = bp.bp.start + years_of_history - 1
+                last_history_year = bp.index[years_of_history - 1]
                 gap = last_required_year - last_history_year
                 if gap > 0:
                     if gap == 1:

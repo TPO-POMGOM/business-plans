@@ -1,20 +1,24 @@
 """ Model a business plan.
 
+
 **Revision history**
 
 - 9-Avr-2019 TPO -- Created this module.
 
-- 27-Sep-2020 TPO -- Created v0.2, replacing class ``BP`` with
+- 27-Sep-2020 TPO -- Created v0.2: replace class ``BP`` with
   ``pandas.DataFrame`` and class ``BPTimeSeries`` with ``pandas.Series``.
 
-- 18-Oct-2020 TPO -- Initial release of v0.2. """
+- 18-Oct-2020 TPO -- Initial release of v0.2.
+
+- 4-Nov-2020 TPO - Created v0.3: generalize bp index to any strictly increasing
+  sequence. """
 
 from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date, datetime
 import os
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, Hashable, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -22,6 +26,7 @@ import pandas as pd
 if os.environ.get('READTHEDOCS', 'False') != 'True':
     import win32con
     from win32ui import MessageBox
+
 
 __all__ = [
     'actualise',
@@ -57,7 +62,7 @@ class UpdateLink:
 
 
 @dataclass
-class ExternalAssumption:
+class ExternalAssumption:  # TODO: refactor update_every_x_year
     """ Represent an external assumption on which the business plan is based.
 
 
@@ -115,7 +120,7 @@ class ExternalAssumption:
 
 
 @dataclass
-class HistoryBasedAssumption:
+class HistoryBasedAssumption:  # TODO: refactor
     """ Represent a business plan assumption based on history data.
 
 
@@ -175,8 +180,8 @@ Assumption = Union[ExternalAssumption, HistoryBasedAssumption]
 
 
 #: Type for the `simulation` argument of :func:`~BPAccessor.line` =
-#: ``Callable[[pandas.Series, int, int], List[float]]``
-Simulator = Callable[[pd.Series, int, int], List[float]]
+#: ``Callable[[pandas.DataFrame, pandas.Series, Hashable, Hashable], List[float]]``
+Simulator = Callable[[pd.DataFrame, pd.Series, Hashable, Hashable], List[float]]
 
 
 @pd.api.extensions.register_dataframe_accessor("bp")
@@ -193,7 +198,7 @@ class BPAccessor:
 
     .. code-block:: python
 
-        >>> df = BP("Test", 2020, 2030)
+        >>> df = BP("Test", range(2020, 2031)))
         >>> print(df.bp.name)
         Test
         >>> df.bp.line(name="Revenue", history=[100, 110, 120])
@@ -235,28 +240,14 @@ class BPAccessor:
 """
 
     def __init__(self, df: pd.DataFrame):
+        if not(df.index.is_monotonic_increasing and df.index.is_unique):
+            raise ValueError("'bp' accessor can only be used on DataFrames's "
+                             "with strictly increasing index values.")
         self._df = df
-        self._start = self._df.index.min()
-        self._end = self._df.index.max()
         self._years_of_history: Dict[str, int] = {}
-        self._max_history_lag: Dict[str, int] = {}
+        self._max_history_lag: Dict[str, int] = {}  # TODO: refactor
         self.name = ""
         self.assumptions: List[Assumption] = []
-
-    @property
-    def start(self) -> int:
-        """ First year of the business plan (`int`, get only) """
-        return self._start
-
-    @property
-    def end(self) -> int:
-        """ Last year of the business plan (`int`, get only) """
-        return self._end
-
-    @property
-    def years(self) -> int:
-        """ Number of years in the business plan (`int`, get only) """
-        return self._end - self._start + 1
 
     def line(self,
              name: str = "",
@@ -267,12 +258,11 @@ class BPAccessor:
              simulate_from: Optional[int] = None,
              simulate_until: Optional[int] = None,
              max_history_lag: int = 1) -> pd.Series:
-        """ Return a new business plan line.
+        """ Return a new business plan line. TODO: update doc
 
         If ``df`` is a ``pandas.DataFrame``, ``df.bp.line()`` returns a new
-        business plan line, represented as  ``pandas.Series`` object whose
-        index is ``range(df.bp.start, df.bp.end + 1)``, and whose dtype is
-        ``float64``.
+        business plan line, represented as a ``pandas.Series`` object, with the
+        same index as ``df`` and with dtype ``float64``.
 
 
         Arguments
@@ -285,7 +275,7 @@ class BPAccessor:
               business plan ``DataFrame``, as column `name`. Note that new
               business plan lines with history data (as opposed to business plan
               lines which are computed from other lines) should only be added
-              to the business plan in this way, to ensure data required by
+              to the business plan in this way, to ensure that data required by
               methods :func:`years_of_history` and :func:`max_history_lag` is
               properly intialized.
 
@@ -314,9 +304,9 @@ class BPAccessor:
                 - If argument `simulate_from` is specified: ``simulate_from``
 
                 - Otherwise, if argument `history` is specified:
-                  ``bp.start + len(history)``
+                  ``df.index[len(history)]``
 
-                - Otherwise: ``bp.start``
+                - Otherwise: ``df.index[0]``
 
             .. _simulation_end:
 
@@ -324,13 +314,19 @@ class BPAccessor:
 
                 - If argument `simulate_until` is specified: ``simulate_until``
 
-                - Otherwise: ``bp.end``
+                - Otherwise: ``df.index[-1]``
 
-            - `simulation` is a function with the following signature:
+            - `simulation` is a function with the following signature::
 
-                ``simulation(s: pandas.Series, start: int, end: int) -> List[float]``
+                simulation(df: pandas.DataFrame,
+                           s: pandas.Series,
+                           start: Hashable,
+                           end: Hashable) -> List[float]
 
-              It returns a list of ``(simulation_end - simulation_start + 1)``
+              It returns a list of::
+
+                df.index.get_loc(simulation_end) - df.index.get_loc(simulation_start) + 1
+
               elements, which are then assigned to elements `simulation_start`
               to `simulation_end` of the business plan line.
 
@@ -340,7 +336,7 @@ class BPAccessor:
         simulate_until: `Optional[int]`, defaults to ``None``
             See argument `simulation` above.
 
-        max_history_lag: `int`, defaults to ``1``
+        max_history_lag: `int`, defaults to ``1`` TODO: refactore
             Specifies the maximum number of years history data for this
             business plan line may lag behind the current year before class
             :class:`~report.BPStatus` issues a warning that history is missing.
@@ -353,28 +349,29 @@ class BPAccessor:
         pandas.Series
             representing the new business plan line. """
 
-        line = pd.Series(data=default_value,
-                         dtype='float64',
-                         index=range(self._start, self._end + 1))
-        if history is None:
+        index = self._df.index
+        line = pd.Series(data=default_value, dtype='float64', index=index)
+        if history is None or len(history) == 0:
             years_of_history = 0
         else:
-            if len(history) > self.years:
+            if len(history) > index.size:
                 raise ValueError(f"Argument 'history' provides {len(history)} "
-                                 f"values, max {self.years} expected")
-            if len(history) > 0:
-                line.iloc[:len(history)] = history
-                years_of_history = len(history)
+                                 f"values, max {index.size} expected")
+            line.iloc[:len(history)] = history
+            years_of_history = len(history)
         if simulation is not None:
-            simulation_start = simulate_from or (self._start + years_of_history)
-            if not (self._start <= simulation_start):
-                raise ValueError(f"Should have {self._start} <= simulate_from")
-            simulation_end = simulate_until or self._end
-            if not (simulation_start <= simulation_end <= self._end):
-                raise ValueError(f"Should have {simulation_start} <= simulate_until <= "
-                                 f"{self._end}")
-            simulation_length = simulation_end - simulation_start + 1
-            result = simulation(line, simulation_start, simulation_end)
+            simulation_start = simulate_from or index[years_of_history]
+            if simulation_start not in index:
+                raise KeyError(simulation_start)
+            simulation_end = simulate_until or index[-1]
+            if simulation_end not in index:
+                raise KeyError(simulation_end)
+            if not (simulation_start <= simulation_end):
+                raise ValueError(f"Start of simulation ({simulation_start}) "
+                                 f"should be <= end of simulation ({simulation_end})")
+            simulation_length = (index.get_loc(simulation_end)
+                                 - index.get_loc(simulation_start) + 1)
+            result = simulation(self._df, line, simulation_start, simulation_end)
             if len(result) != simulation_length:
                 raise ValueError(f"list returned by simulator should have "
                                  f"{simulation_length} elements")
@@ -382,7 +379,7 @@ class BPAccessor:
         if name:
             self._df[name] = line
             self._years_of_history[name] = years_of_history
-            self._max_history_lag[name] = max_history_lag
+            self._max_history_lag[name] = max_history_lag  # TODO: update
         return line
 
     def years_of_history(self, name: str) -> int:
@@ -406,7 +403,7 @@ class BPAccessor:
             returned. Otherwise, ``0`` is returned. """
         return self._years_of_history.get(name, 0)
 
-    def max_history_lag(self, name: str) -> int:
+    def max_history_lag(self, name: str) -> int:  # TODO: refactor
         """ Maximum missing years of history for a given business plan line.
 
 
@@ -529,7 +526,7 @@ def max(*line: pd.Series) -> pd.Series:
     return pd.DataFrame([*line]).max()
 
 
-def BP(name: str,
+def BP(name: str,  # TODO: remove ???
        start: int,
        end: int) -> pd.DataFrame:
     """ Return a ``pandas.DataFrame`` representing a business plan.
@@ -610,18 +607,13 @@ def percent_of(s2: pd.Series,
         Simulator function to be passed to the `simulation` argument of method
         :func:`~BPAccessor.line`. In the following, `s1` denotes the business
         plan line on which the simulation is being performed. The simulation
-        will set, for :ref:`simulation_start <simulation_start>` <= `year` <=
+        will set, for :ref:`simulation_start <simulation_start>` <= `i` <=
         :ref:`simulation_end <simulation_end>`::
 
-          s1.loc[year] = s2.loc[year + shift] * percent """
+          s1.loc[i] = s2.shift(-shift, fill_value=0).loc[i] * percent """
 
-    def simulator(s1: pd.Series, start: int, end: int) -> List[float]:
-        if not(s2.index.min() <= start + shift <= end + shift <= s2.index.max()):
-            raise ValueError("Should have s1.start <= start + shift <= "
-                             "end + shift <= s2.end")
-        simulation = [s2[i] * percent
-                      for i in range(start + shift, end + shift + 1)]
-        return simulation
+    def simulator(df: pd.DataFrame, s1: pd.Series, start: Any, end: Any) -> List[float]:
+        return list(s2.shift(-shift, fill_value=0).loc[start: end] * percent)
 
     return simulator
 
@@ -641,7 +633,7 @@ def actualise(percent: float,
     value: `Optional[float]`, defaults to ``None``
         Value to be actualised.
 
-    reference_year: `Optional[int]`, defaults to ``None``
+    reference_year: `Optional[int]`, defaults to ``None`` TODO: change to reference
         Reference year against which `value` is to be actualised.
 
     Returns
@@ -680,15 +672,32 @@ def actualise(percent: float,
 
               s.loc[year] = s.loc[year - 1] * (1 + percent) """
 
-    def simulator(s: pd.Series, start: int, end: int) -> List[float]:
+    def simulator(df: pd.DataFrame, s: pd.Series, start: Any, end: Any) -> List[float]:
+        start_loc = s.index.get_loc(start)
+        end_loc = s.index.get_loc(end)
         if value is None and reference_year is not None:
             raise ValueError("Cannot specify reference_year and default value")
-        if value is None and start == s.index.min():
+        if value is None and start_loc == 0:
             raise ValueError("history, simulate_from and value cannot all be None")
-        _value = value or s.loc[start - 1]
-        _reference_year = reference_year or (start if value else (start - 1))
-        return [_value * (1 + percent) ** (year - _reference_year)
-                for year in range(start, end + 1)]
+        if value:
+            _value = value
+        else:
+            if start_loc == 0:
+                raise ValueError("Invalid start index", start)
+            else:
+                _value = s.iloc[start_loc - 1]
+        if reference_year:
+            _reference = s.index.get_loc(reference_year)
+        else:
+            if value:
+                _reference = start_loc
+            else:
+                if start_loc == 0:
+                    raise ValueError("Invalid start index", start)
+                else:
+                    _reference = start_loc - 1
+        return [_value * (1 + percent) ** (i - _reference)
+                for i in range(start_loc, end_loc + 1)]
 
     return simulator
 
@@ -724,14 +733,12 @@ def actualise_and_cumulate(s2: pd.Series, percent: float) -> Simulator:
         similarly ``s2.loc[year - 1]`` is replaced by ``0`` for
         ``year <= s2.index.min()``. """
 
-    def simulator(s1: pd.Series, start: int, end: int) -> List[float]:
+    def simulator(df: pd.DataFrame, s1: pd.Series, start: int, end: int) -> List[float]:
         simulation = []
-        value = s1.loc[start - 1] if start > s1.index.min() else 0
-        s2_start = s2.index.min()
-        for year in range(start, end + 1):
-            value = ((value + (s2.loc[year - 1] if year > s2_start else 0))
-                     * (1 + percent))
-            simulation.append(value)
+        cumulated = s1.shift(1, fill_value=0).loc[start]
+        for value in s2.shift(1, fill_value=0).loc[start: end]:
+            cumulated = (cumulated + value) * (1 + percent)
+            simulation.append(cumulated)
         return simulation
 
     return simulator
