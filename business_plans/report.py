@@ -11,7 +11,10 @@
 - 27-Sep-2020 TPO -- Created v0.2, replacing class ``BP`` with ``pandas.DataFrame``
   and class ``BPTimeSeries`` with ``pandas.Series``.
 
-- 21-Oct-2020 TPO -- Initial release of v0.2.  """
+- 21-Oct-2020 TPO -- Initial release of v0.2.
+
+- 4-Nov-2020 TPO - Created v0.3: generalize bp index to any strictly increasing
+  sequence. """
 
 
 from __future__ import annotations
