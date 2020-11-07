@@ -144,8 +144,8 @@ class HistoryBasedAssumption:
         Historical data which is displayed when the assumption needs to be
         updated, as an aid to decision.
 
-    start: `int`
-        The year corresponding to the first element in `history`.
+    start: `Any`
+        The index corresponding to the first element in `history`.
 
     last_update: `datetime.date`
         Date of the most recent update the assumption has received.
@@ -162,7 +162,7 @@ class HistoryBasedAssumption:
     name: str
     value: float
     history: List[float]
-    start: int
+    start: Any
     last_update: date
     update_every_x_year: float
     update_required: bool = field(init=False)

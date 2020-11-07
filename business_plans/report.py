@@ -351,6 +351,7 @@ class BPChart(Element):
             chart_lines = [(bp, bp.bp.name, bp[_line]) for bp in reversed(_bps)]
         else:
             raise TypeError("Invalid types for 'bp_arg' and 'line_arg'")
+        # TODO: handle default None
         labels = [format_label(label, label_format) for label in bp_index]
         stacked = 'true' if chart_type == 'stacked bar' else 'false'
         chart = Chart(datasets=",\n".join(datasets),
@@ -610,6 +611,7 @@ class BPStatus(Element):
                             color=CHART_COLORS[color % len(CHART_COLORS)],
                             data=", ".join(str(d) for d in data)))
 
+        fmt = label_format or bp.bp.index_format
         bp_status: List[str] = []
         messages = BPStatus.messages
         for assumption in bp.bp.assumptions:
@@ -628,20 +630,23 @@ class BPStatus(Element):
                     + update_instructions)
             if (isinstance(assumption, HistoryBasedAssumption)
                     and assumption.update_required):
-                years = len(assumption.history)
-                average = round(sum(assumption.history) / years, ndigits=1)
+                n = len(assumption.history)
+                average = round(sum(assumption.history) / n, ndigits=1)
+                start_pos = bp.index.get_loc(assumption.start)
+                labels = [bp.bp.index_to_datetime(index)
+                          for index in bp.index[start_pos: start_pos + n]]
                 chart = Chart(
                     datasets=(dataset_js(messages['Assumption'][language],
                                          color=0,
-                                         data=[assumption.value] * years)
+                                         data=[assumption.value] * n)
                               + dataset_js(messages['History'][language],
                                            color=1,
                                            data=assumption.history)
                               + dataset_js(messages['Average'][language],
                                            color=2,
-                                           data=[average] * years)),
-                    labels="[" + ",".join(str(assumption.start + i)
-                                          for i in range(years)) + "]",
+                                           data=[average] * n)),
+                    labels="[" + ",".join(format_label(label, fmt)
+                                          for label in labels) + "]",
                     options="""\
                 scales: {
                     yAxes: [{
@@ -666,7 +671,6 @@ class BPStatus(Element):
                 most_recent = bp.bp.index_to_datetime(bp.index[years_of_history - 1])
                 required = date.today() - bp.bp.max_history_lag(name)
                 if most_recent < required:
-                    fmt = label_format or bp.bp.index_format
                     bp_status.append(
                         messages['Missing history'][language]
                         .format(name=name,
