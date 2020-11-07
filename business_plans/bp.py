@@ -10,8 +10,8 @@
 
 - 18-Oct-2020 TPO -- Initial release of v0.2.
 
-- 4-Nov-2020 TPO - Created v0.3: generalize bp index to any strictly increasing
-  sequence. """
+- 4-Nov-2020 TPO - Created v0.3: generalize business plan index to any strictly
+  increasing sequence. """
 
 from __future__ import annotations
 from dataclasses import dataclass, field
@@ -221,7 +221,7 @@ class BPAccessor:
     Attributes
     ----------
 
-    name: `str`, initial value is ``""``
+    name: `str`, initial value is ``""`` TODO: wrong, correct it
         Name of the business plan line. It can be used to access the business
         plan line, see example above.
 
@@ -237,7 +237,9 @@ class BPAccessor:
               update_every_x_year=2,
               update_instructions="See {source} for more information."
               update_links={'source': UpdateLink("reference", "http://ref.com")})
-"""
+
+    index_format: `str`, initial value is ``'%d/%m/%Y'``
+        TODO """
 
     def __init__(self, df: pd.DataFrame):
         if not(df.index.is_monotonic_increasing and df.index.is_unique):
@@ -247,10 +249,35 @@ class BPAccessor:
         self._years_of_history: Dict[str, int] = {}
         self._max_history_lag: Dict[str, timedelta] = {}
         self.name = ""
-        self.index_format = "%d/%m/%Y"
+        self.index_format = '%d/%m/%Y'
         self.assumptions: List[Assumption] = []
 
-    def index_to_datetime(index: Any) -> datetime:
+    def index_to_datetime(self, index: Any) -> datetime:
+        """ Return the ``datetime`` equivalent of a given index value.
+
+
+        Arguments
+        ---------
+
+        index: `Any`
+            The index value to be converted to a ``datetime``.
+
+
+        Returns
+        -------
+
+        datetime
+            Returns `index` if it is a ``datetime`` object, and raises a
+            ``ValueError`` exception otherwise. This method is meant to be
+            overriden when index values are not ``datetime`` objects, to
+            provide a means of converting them to ``datetime``.
+
+            For instance, if index values are integers representing years::
+
+                df = pd.DataFrame(dtype='float64', index=range(2020, 2031))
+                df.bp.index_to_datetime = lambda index: date(year=index, month=1, day=1)
+                df.bp.index_format = '%Y'
+        """
         if isinstance(index, datetime):
             return index
         else:
