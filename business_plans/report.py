@@ -21,7 +21,7 @@ from __future__ import annotations
 from datetime import date, datetime, time
 import html
 from pathlib import Path
-from typing import Any, Callable, List, Union
+from typing import Any, Callable, List, Optional, Union
 
 import pandas as pd
 from typing_extensions import Literal
@@ -52,6 +52,15 @@ CHART_COLORS = [
     '#00a950',
     '#58595b',
     '#8549ba']
+
+
+def format_label(label: datetime, fmt: Union[str, Callable[[Any], str]]) -> str:
+    if isinstance(fmt, str):
+        return label.strftime(fmt)
+    elif callable(fmt):
+        return fmt(label)
+    else:
+        raise TypeError("Expected str or Callable[[Any], str]", fmt)
 
 
 class Element:
@@ -342,21 +351,7 @@ class BPChart(Element):
             chart_lines = [(bp, bp.bp.name, bp[_line]) for bp in reversed(_bps)]
         else:
             raise TypeError("Invalid types for 'bp_arg' and 'line_arg'")
-        if isinstance(label_format, str):
-            labels = []
-            for label in bp_index:
-                if (isinstance(label, date)
-                        or isinstance(label, datetime)
-                        or isinstance(label, time)):
-                    labels.append(label.strftime(label_format))
-                else:
-                    labels.append(label_format.format(label))
-            # labels = f'{list(range(bp_start + offset_x, bp_end + 1 + offset_x))}'
-        elif callable(label_format):
-            labels = [label_format(label) for label in bp_index]
-        else:
-            raise TypeError("Argument label_format should be str or "
-                            "Callable[[Any], str]")
+        labels = [format_label(label, label_format) for label in bp_index]
         stacked = 'true' if chart_type == 'stacked bar' else 'false'
         chart = Chart(datasets=",\n".join(datasets),
                       title=title,
@@ -569,13 +564,11 @@ class BPStatus(Element):
                          "valeur de l'hypothèse avec l'historique, puis mettez "
                          "à jour l'hypothèse.\n"
         },
-        'Missing history year': {
-            'English': "<b>{name}</b>: missing history for {year}.",
-            'Français': "<b>{name}</b> : il manque l'historique pour {year}."
-        },
-        'Missing history years': {
-            'English': "<b>{name}</b>: missing history for {start} - {end}.",
-            'Français': "<b>{name}</b> : il manque l'historique pour {start} - {end}."
+        'Missing history': {
+            'English': "<b>{name}</b>: history is available until {most_recent} "
+                       "and is missing until {required}.",
+            'Français': "<b>{name}</b> : l'historique va jusqu'à {most_recent} "
+                         "et manque ensuite jusqu'à {required}."
         },
         'Assumption': {
             'English': "Assumption",
@@ -594,6 +587,7 @@ class BPStatus(Element):
     def __init__(self,
                  bp: pd.DataFrame,
                  title: str = "",
+                 label_format: Optional[Union[str, Callable[[Any], str]]] = None,
                  language: Languages = 'English') -> None:
 
         def to_html_ul(strings: List[str]) -> str:
@@ -669,20 +663,15 @@ class BPStatus(Element):
         for name in bp:
             years_of_history = bp.bp.years_of_history(name)  # TODO: rename
             if years_of_history:
-                last_required_year = date.today().year - bp.bp.max_history_lag(name)
-                last_history_year = bp.index[years_of_history - 1]
-                gap = last_required_year - last_history_year
-                if gap > 0:
-                    if gap == 1:
-                        bp_status.append(
-                            messages['Missing history year'][language]
-                            .format(name=name, year=last_required_year))
-                    else:
-                        bp_status.append(
-                            messages['Missing history years'][language]
-                            .format(name=name,
-                                    start=last_history_year + 1,
-                                    end=last_required_year))
+                most_recent = bp.bp.index_to_datetime(bp.index[years_of_history - 1])
+                required = date.today() - bp.bp.max_history_lag(name)
+                if most_recent < required:
+                    fmt = label_format or bp.bp.index_format
+                    bp_status.append(
+                        messages['Missing history'][language]
+                        .format(name=name,
+                                most_recent=format_label(most_recent, fmt),
+                                required=format_label(required, fmt)))
         summary = 'Out of date' if bp_status else 'Up to date'
         super().__init__(f"""\
     <h2>{title}</h2>

@@ -15,10 +15,10 @@
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 import os
 from pathlib import Path
-from typing import Any, Callable, Dict, Hashable, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -62,7 +62,7 @@ class UpdateLink:
 
 
 @dataclass
-class ExternalAssumption:  # TODO: refactor update_every_x_year
+class ExternalAssumption:
     """ Represent an external assumption on which the business plan is based.
 
 
@@ -120,7 +120,7 @@ class ExternalAssumption:  # TODO: refactor update_every_x_year
 
 
 @dataclass
-class HistoryBasedAssumption:  # TODO: refactor
+class HistoryBasedAssumption:
     """ Represent a business plan assumption based on history data.
 
 
@@ -180,8 +180,8 @@ Assumption = Union[ExternalAssumption, HistoryBasedAssumption]
 
 
 #: Type for the `simulation` argument of :func:`~BPAccessor.line` =
-#: ``Callable[[pandas.DataFrame, pandas.Series, Hashable, Hashable], List[float]]``
-Simulator = Callable[[pd.DataFrame, pd.Series, Hashable, Hashable], List[float]]
+#: ``Callable[[pandas.DataFrame, pandas.Series, Any, Any], List[float]]``
+Simulator = Callable[[pd.DataFrame, pd.Series, Any, Any], List[float]]
 
 
 @pd.api.extensions.register_dataframe_accessor("bp")
@@ -245,9 +245,17 @@ class BPAccessor:
                              "with strictly increasing index values.")
         self._df = df
         self._years_of_history: Dict[str, int] = {}
-        self._max_history_lag: Dict[str, int] = {}  # TODO: refactor
+        self._max_history_lag: Dict[str, timedelta] = {}
         self.name = ""
+        self.index_format = "%d/%m/%Y"
         self.assumptions: List[Assumption] = []
+
+    def index_to_datetime(index: Any) -> datetime:
+        if isinstance(index, datetime):
+            return index
+        else:
+            raise ValueError("Index value is not a datetime instance, method "
+                             "index_to_datetime() must be overriden.")
 
     def line(self,
              name: str = "",
@@ -257,8 +265,8 @@ class BPAccessor:
              simulation: Optional[Simulator] = None,
              simulate_from: Optional[int] = None,
              simulate_until: Optional[int] = None,
-             max_history_lag: int = 1) -> pd.Series:
-        """ Return a new business plan line. TODO: update doc
+             max_history_lag: timedelta = timedelta(days=365)) -> pd.Series:
+        """ Return a new business plan line.
 
         If ``df`` is a ``pandas.DataFrame``, ``df.bp.line()`` returns a new
         business plan line, represented as a ``pandas.Series`` object, with the
@@ -320,8 +328,8 @@ class BPAccessor:
 
                 simulation(df: pandas.DataFrame,
                            s: pandas.Series,
-                           start: Hashable,
-                           end: Hashable) -> List[float]
+                           start: Any,
+                           end: Any) -> List[float]
 
               It returns a list of::
 
@@ -336,7 +344,7 @@ class BPAccessor:
         simulate_until: `Optional[int]`, defaults to ``None``
             See argument `simulation` above.
 
-        max_history_lag: `int`, defaults to ``1`` TODO: refactore
+        max_history_lag: `int`, defaults to ``1`` TODO: Update
             Specifies the maximum number of years history data for this
             business plan line may lag behind the current year before class
             :class:`~report.BPStatus` issues a warning that history is missing.
@@ -403,7 +411,7 @@ class BPAccessor:
             returned. Otherwise, ``0`` is returned. """
         return self._years_of_history.get(name, 0)
 
-    def max_history_lag(self, name: str) -> int:  # TODO: refactor
+    def max_history_lag(self, name: str) -> timedelta:  # TODO: Update
         """ Maximum missing years of history for a given business plan line.
 
 
@@ -424,7 +432,7 @@ class BPAccessor:
             issues a warning that history is missing. This is the value supplied
             to argument `max_history_lag` of method :func:`line` at the time
             the business plan line was created. """
-        return self._max_history_lag.get(name, 1)
+        return self._max_history_lag.get(name, timedelta(days=365))
 
     def compare_to_reference(self, ref_file_path: str) -> None:
         """ Compare the business plan to a reference file.
