@@ -635,7 +635,7 @@ def percent_of(s2: pd.Series,
         Factor by which `s2` is to be multiplied for the simulation.
 
     shift: `int`
-        Number of years by which `s2` is to be shifted before multiplying it by
+        Number of periods `s2` is to be shifted before multiplying it by
         `percent`.
 
 
@@ -659,8 +659,8 @@ def percent_of(s2: pd.Series,
 
 def actualise(percent: float,
               value: Optional[float] = None,
-              reference_year: Optional[int] = None) -> Simulator:
-    """ Simulator -- Actualise a value x% per year, against a reference year.
+              reference: Optional[Any] = None) -> Simulator:
+    """ Simulator -- Actualise a value x% per year, against a reference period.
 
 
     Arguments
@@ -672,8 +672,8 @@ def actualise(percent: float,
     value: `Optional[float]`, defaults to ``None``
         Value to be actualised.
 
-    reference_year: `Optional[int]`, defaults to ``None`` TODO: change to reference
-        Reference year against which `value` is to be actualised.
+    reference: `Optional[Any]`, defaults to ``None``
+        Reference period against which `value` is to be actualised.
 
     Returns
     -------
@@ -683,58 +683,56 @@ def actualise(percent: float,
         :func:`~BPAccessor.line`. In the following, `s` denotes the business
         plan line on which the simulation is being performed.
 
-        - If both `value` and `reference_year` are specified, the simulation
+        - If both `value` and `reference` are specified, the simulation
           will set::
 
-            s.loc[reference_year] = value
+            s.loc[reference] = value
 
-          For `reference_year` < `year` <= :ref:`simulation_end <simulation_end>`::
+          For `reference` < `i` <= :ref:`simulation_end <simulation_end>`::
 
-            s.loc[year] = s.loc[year - 1] * (1 + percent)
+            s.loc[i] = s.loc[i - 1] * (1 + percent)
 
-          For :ref:`simulation_start <simulation_start>` <= `year` < `reference_year`::
+          For :ref:`simulation_start <simulation_start>` <= `i` < `reference`::
 
-            s.loc[year] = s.loc[year + 1] / (1 + percent)
+            s.loc[i] = s.loc[i + 1] / (1 + percent)
 
-        - If `value` is specified and `reference_year` is defaulted, the
+        - If `value` is specified and `reference` is defaulted, the
           simulation will set::
 
             s.loc[simulation_start] = value
 
-          For `reference_year` < `year` <= :ref:`simulation_end <simulation_end>`::
+          For `reference` < `i` <= :ref:`simulation_end <simulation_end>`::
 
-            s.loc[year] = s.loc[year - 1] * (1 + percent)
+            s.loc[i] = s.loc[i - 1] * (1 + percent)
 
-        - If both `value` and `reference_year` are defaulted, the simulation
-          will set, for :ref:`simulation_start <simulation_start>` <= `year` <=
+        - If both `value` and `reference` are defaulted, the simulation
+          will set, for :ref:`simulation_start <simulation_start>` <= `i` <=
           :ref:`simulation_end <simulation_end>`::
 
-              s.loc[year] = s.loc[year - 1] * (1 + percent) """
+              s.loc[i] = s.loc[i - 1] * (1 + percent) """
 
     def simulator(df: pd.DataFrame, s: pd.Series, start: Any, end: Any) -> List[float]:
         start_loc = s.index.get_loc(start)
         end_loc = s.index.get_loc(end)
-        if value is None and reference_year is not None:
-            raise ValueError("Cannot specify reference_year and default value")
+        if value is None and reference is not None:
+            raise ValueError("Cannot specify 'reference' and default 'value'")
         if value is None and start_loc == 0:
-            raise ValueError("history, simulate_from and value cannot all be None")
+            raise ValueError("Cannot default 'history', 'simulate_from' and 'value'")
         if value:
             _value = value
         else:
             if start_loc == 0:
                 raise ValueError("Invalid start index", start)
-            else:
-                _value = s.iloc[start_loc - 1]
-        if reference_year:
-            _reference = s.index.get_loc(reference_year)
+            _value = s.iloc[start_loc - 1]
+        if reference:
+            _reference = s.index.get_loc(reference)
         else:
             if value:
                 _reference = start_loc
             else:
                 if start_loc == 0:
                     raise ValueError("Invalid start index", start)
-                else:
-                    _reference = start_loc - 1
+                _reference = start_loc - 1
         return [_value * (1 + percent) ** (i - _reference)
                 for i in range(start_loc, end_loc + 1)]
 
