@@ -417,7 +417,7 @@ class BPAccessor:
         if name:
             self._df[name] = line
             self._years_of_history[name] = years_of_history
-            self._max_history_lag[name] = max_history_lag  # TODO: update
+            self._max_history_lag[name] = max_history_lag
         return line
 
     def years_of_history(self, name: str) -> int:
@@ -441,7 +441,7 @@ class BPAccessor:
             returned. Otherwise, ``0`` is returned. """
         return self._years_of_history.get(name, 0)
 
-    def max_history_lag(self, name: str) -> timedelta:  # TODO: Update
+    def max_history_lag(self, name: str) -> timedelta:
         """ Maximum missing years of history for a given business plan line.
 
 
@@ -458,10 +458,11 @@ class BPAccessor:
 
         int
             Maximum number of years history data for this business plan line
-            may lag behind the current year before class :class:`~business_plans.report.BPStatus`
-            issues a warning that history is missing. This is the value supplied
-            to argument `max_history_lag` of method :func:`line` at the time
-            the business plan line was created. """
+            may lag behind the current year before class
+            :class:`~business_plans.report.BPStatus` issues a warning that
+            history is missing. This is the value supplied to argument
+            `max_history_lag` of method :func:`line` at the time the business
+            plan line was created. """
         return self._max_history_lag.get(name, timedelta(days=365))
 
     def compare_to_reference(self, ref_file_path: str) -> None:
