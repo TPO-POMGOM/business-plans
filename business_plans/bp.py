@@ -85,16 +85,17 @@ class ExternalAssumption:
     update_every_x_year: `float`
         Maximum duration between updates, in years. If the time elapsed since
         the last update is less than this value, the assumption is considered
-        to be up to date and will not be reported by :class:`~report.BPStatus`
-        report elements. Otherwise, :class:`~report.BPStatus` elements will
-        report this assumption as being out of date and will display
-        instructions on how to update it.
+        to be up to date and will not be reported by
+        :class:`~business_plans.report.BPStatus` report elements. Otherwise,
+        :class:`~business_plans.report.BPStatus` elements will report this
+        assumption as being out of date and will display instructions on how to
+        update it.
 
     update_instructions: `str`
-        Instructions displayed by the :class:`~report.BPStatus` report element
-        when the assumption needs to be updated. The string may refer to the
-        keys in argument `update_links` to display web sites hyperlinks in the
-        instructions. For example::
+        Instructions displayed by the :class:`~business_plans.report.BPStatus`
+        report element when the assumption needs to be updated. The string may
+        refer to the keys in argument `update_links` to display web sites
+        hyperlinks in the instructions. For example::
 
          ExternalAssumption(
              name="Some assumption",
@@ -153,11 +154,12 @@ class HistoryBasedAssumption:
     update_every_x_year: `float`
         Maximum duration between updates, in years. If the time elapsed since
         the last update is less than this value, the assumption is considered
-        to be up to date and will not be reported by :class:`~report.BPStatus`
-        report elements. Otherwise, :class:`~report.BPStatus` elements will
-        report this assumption as being out of date and will display -- as an
-        aid to decision -- a graph showing historical data, the mean for
-        historical data values, and the current value of the assumption. """
+        to be up to date and will not be reported by
+        :class:`~business_plans.report.BPStatus` report elements. Otherwise,
+        :class:`~business_plans.report.BPStatus` elements will report this
+        assumption as being out of date and will display -- as an aid to
+        decision -- a graph showing historical data, the mean for historical
+        data values, and the current value of the assumption. """
 
     name: str
     value: float
@@ -290,8 +292,8 @@ class BPAccessor:
              default_value: float = 0,
              history: Optional[Union[pd.Series, List[float]]] = None,
              simulation: Optional[Simulator] = None,
-             simulate_from: Optional[int] = None,
-             simulate_until: Optional[int] = None,
+             simulate_from: Optional[Any] = None,
+             simulate_until: Optional[Any] = None,
              max_history_lag: timedelta = timedelta(days=365)) -> pd.Series:
         """ Return a new business plan line.
 
@@ -325,7 +327,7 @@ class BPAccessor:
             When a ``pandas.Series`` or ``List[float]`` of n elements is
             specified, the first n elements of the business plan line are
             initialised with those elements. Method :func:`years_of_history`
-            can be used to retrieve n.
+            can later be used to retrieve n.
 
         simulation: `Optional[` :class:`Simulator` `]`, defaults to ``None``
             When `simulation` is specified, it is used to calculate the values
@@ -365,17 +367,18 @@ class BPAccessor:
               elements, which are then assigned to elements `simulation_start`
               to `simulation_end` of the business plan line.
 
-        simulate_from: `Optional[int]`, defaults to ``None``
+        simulate_from: `Optional[Any]`, defaults to ``None``
             See argument `simulation` above.
 
-        simulate_until: `Optional[int]`, defaults to ``None``
+        simulate_until: `Optional[Any]`, defaults to ``None``
             See argument `simulation` above.
 
-        max_history_lag: `int`, defaults to ``1`` TODO: Update
-            Specifies the maximum number of years history data for this
-            business plan line may lag behind the current year before class
-            :class:`~report.BPStatus` issues a warning that history is missing.
-            Method :func:`max_history_lag` can be used to retrieve this value.
+        max_history_lag: `timedelta`, defaults to ``timedelta(days=365)``
+            Specifies the maximum lag between history data for this business
+            plan line and the current date before class
+            :class:`~business_plans.report.BPStatus` issues a warning that
+            history is missing. Method :func:`max_history_lag` can later be
+            used to retrieve this value.
 
 
         Returns
@@ -455,7 +458,7 @@ class BPAccessor:
 
         int
             Maximum number of years history data for this business plan line
-            may lag behind the current year before class :class:`~report.BPStatus`
+            may lag behind the current year before class :class:`~business_plans.report.BPStatus`
             issues a warning that history is missing. This is the value supplied
             to argument `max_history_lag` of method :func:`line` at the time
             the business plan line was created. """
