@@ -188,44 +188,47 @@ Simulator = Callable[[pd.DataFrame, pd.Series, Any, Any], List[float]]
 
 @pd.api.extensions.register_dataframe_accessor("bp")
 class BPAccessor:
-    """ Pandas ``DataFrame`` accessor for business plan methods and properties (``bp``).
+    """ Pandas DataFrame accessor for business plan methods and properties (``bp``).
 
-    ``DataFrame``'s representing a business plan can be created by using
-    factory function :func:`BP`. Methods and properties specific to  business
-    plans can then be used by specifying the ``bp`` accessor, which is
-    implemented by this class.
+    A ``pandas.DataFrame`` can be used to represent a business plan:
 
+    - Its index is used to represent the periods spanned by the business plan.
+      It can be any strictly increasing series of values (``int``, ``date``,
+      ``datetime``, etc.) ``ValueError`` is raised if such is not the case.
 
-    **Example**
+    - Its columns represent the lines of the business plan (such as revenue,
+      costs, margin, etc.). They are created by using method
+      :func:`~BPAccessor.line`.
 
-    .. code-block:: python
+    Class :class:`BPAccessor` provides methods and properties applicable to
+    such DataFrame's. They can be used by specifying the ``bp`` accessor::
 
-        >>> df = BP("Test", range(2020, 2031)))
-        >>> print(df.bp.name)
-        Test
+        >>> df = pd.DataFrame(dtype='float64',
+                              index=pd.date_range(start=date(2020, 1, 1),
+                                                  periods=10,
+                                                  freq='YS')
         >>> df.bp.line(name="Revenue", history=[100, 110, 120])
-        2020    100.0
-        2021    110.0
-        2022    120.0
-        2023      0.0
-        2024      0.0
-        2025      0.0
-        2026      0.0
-        2027      0.0
-        2028      0.0
-        2029      0.0
-        2030      0.0
-        dtype: float64
-        >>> print(df.at[2020, "Revenue"])
+        2020-01-01    100.0
+        2021-01-01    110.0
+        2022-01-01    120.0
+        2023-01-01      0.0
+        2024-01-01      0.0
+        2025-01-01      0.0
+        2026-01-01      0.0
+        2027-01-01      0.0
+        2028-01-01      0.0
+        2029-01-01      0.0
+        Freq: AS-JAN, dtype: float64
+        >>> print(df.at[date(2020, 1, 1), "Revenue"])
         100.0
 
 
     Attributes
     ----------
 
-    name: `str`, initial value is ``""`` TODO: wrong, correct it
-        Name of the business plan line. It can be used to access the business
-        plan line, see example above.
+    name: `str`, initial value is ``""``
+        Name of the business plan. It is displayed on report elements generated
+        by class :class:`~business_plans.report.CompareBPsLineChart`.
 
     assumptions: `List[` :data:`Assumption` `]`, initial value is ``[]``
         Assumptions on which the business plan is based. Assumptions are
