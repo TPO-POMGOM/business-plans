@@ -760,15 +760,13 @@ def actualise_and_cumulate(s2: pd.Series, percent: float) -> Simulator:
         Simulator function to be passed to the `simulation` argument of method
         :func:`~BPAccessor.line`. In the following, `s1` denotes the business
         plan line on which the simulation is being performed. The simulation
-        will set, for :ref:`simulation_start <simulation_start>` <= `year` <=
+        will set, for :ref:`simulation_start <simulation_start>` <= `i` <=
         :ref:`simulation_end <simulation_end>`::
 
-          s1.loc[year] = (s1.loc[year - 1] + s2.loc[year - 1]) * (1 + percent)
+          s1.loc[i] = (s1.shift(1, fill_value=0).loc[i]
+                       + s2.shift(1, fill_value=0).loc[i]) * (1 + percent)
 
-        Where by convention ``s1.loc[year - 1]`` is replaced by ``0`` for
-        ``year <= s1.index.min()`` (instead of raising ``KeyError``), and
-        similarly ``s2.loc[year - 1]`` is replaced by ``0`` for
-        ``year <= s2.index.min()``. """
+    """
 
     def simulator(df: pd.DataFrame, s1: pd.Series, start: int, end: int) -> List[float]:
         simulation = []
