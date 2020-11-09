@@ -1,5 +1,43 @@
 """ Model a business plan.
 
+Business plans are modeled using ``pandas.DataFrame`` objects:
+
+- The index is used to represent the periods spanned by the business plan.
+  It can be any **strictly increasing series** of values (``int``, ``date``,
+  ``datetime``, etc.).
+
+- Columns of the DataFrame represent the 'lines' of the business plan (such as
+  revenue, costs, margin, etc.). They are created by using method
+  :func:`~BPAccessor.line`.
+
+- Values have dtype ``float64``.
+
+The ``bp`` accessor, defined by Class :class:`BPAccessor`, provides methods and
+properties applicable to such DataFrame's.
+
+**Example**
+
+.. code-block:: python
+
+    >>> df = pd.DataFrame(dtype='float64',
+                          index=pd.date_range(start=date(2020, 1, 1),
+                                              periods=10,
+                                              freq='YS')
+    >>> df.bp.line(name="Revenue", history=[100, 110, 120])
+    2020-01-01    100.0
+    2021-01-01    110.0
+    2022-01-01    120.0
+    2023-01-01      0.0
+    2024-01-01      0.0
+    2025-01-01      0.0
+    2026-01-01      0.0
+    2027-01-01      0.0
+    2028-01-01      0.0
+    2029-01-01      0.0
+    Freq: AS-JAN, dtype: float64
+    >>> print(df.at[date(2020, 1, 1), "Revenue"])
+    100.0
+
 
 **Revision history**
 
@@ -188,39 +226,7 @@ Simulator = Callable[[pd.DataFrame, pd.Series, Any, Any], List[float]]
 
 @pd.api.extensions.register_dataframe_accessor("bp")
 class BPAccessor:
-    """ Pandas DataFrame accessor for business plan methods and properties (``bp``).
-
-    A ``pandas.DataFrame`` can be used to represent a business plan:
-
-    - Its index is used to represent the periods spanned by the business plan.
-      It can be any strictly increasing series of values (``int``, ``date``,
-      ``datetime``, etc.) ``ValueError`` is raised if such is not the case.
-
-    - Its columns represent the lines of the business plan (such as revenue,
-      costs, margin, etc.). They are created by using method
-      :func:`~BPAccessor.line`.
-
-    Class :class:`BPAccessor` provides methods and properties applicable to
-    such DataFrame's. They can be used by specifying the ``bp`` accessor::
-
-        >>> df = pd.DataFrame(dtype='float64',
-                              index=pd.date_range(start=date(2020, 1, 1),
-                                                  periods=10,
-                                                  freq='YS')
-        >>> df.bp.line(name="Revenue", history=[100, 110, 120])
-        2020-01-01    100.0
-        2021-01-01    110.0
-        2022-01-01    120.0
-        2023-01-01      0.0
-        2024-01-01      0.0
-        2025-01-01      0.0
-        2026-01-01      0.0
-        2027-01-01      0.0
-        2028-01-01      0.0
-        2029-01-01      0.0
-        Freq: AS-JAN, dtype: float64
-        >>> print(df.at[date(2020, 1, 1), "Revenue"])
-        100.0
+    """ Pandas DataFrame accessor for business plan methods and properties.
 
 
     Attributes
