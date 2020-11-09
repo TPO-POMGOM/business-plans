@@ -5,12 +5,6 @@ Module **bp**
 .. automodule:: business_plans.bp
 
 
-Function **BP**
-----------------
-
-.. autofunction:: BP
-
-
 Class **BPAccessor**
 --------------------
 

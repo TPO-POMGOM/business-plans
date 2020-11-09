@@ -69,7 +69,6 @@ if os.environ.get('READTHEDOCS', 'False') != 'True':
 __all__ = [
     'actualise',
     'actualise_and_cumulate',
-    'BP',
     'HistoryBasedAssumption',
     'max',
     'min',
@@ -585,60 +584,6 @@ def max(*line: pd.Series) -> pd.Series:
     **Credits** -- Based on `Andy Hayden's code
     <https://stackoverflow.com/a/16993415>`_ """
     return pd.DataFrame([*line]).max()
-
-
-def BP(name: str,  # TODO: remove ???
-       start: int,
-       end: int) -> pd.DataFrame:
-    """ Return a ``pandas.DataFrame`` representing a business plan.
-
-    The DataFrame's columns represent the lines of the business plan (such as
-    revenue, costs, margin, etc.). They are created by using method
-    :func:`~BPAccessor.line`.
-
-    The DataFrame's rows are the years which the business plan spans, from
-    `start` to `end` (included).
-
-
-    **Example**
-
-    .. code-block:: python
-
-        >>> df = BP("Test", 2020, 2030)
-        >>> print(df.bp.name)
-        Test
-        >>> df.bp.line(name="Revenue", history=[100, 110, 120])
-        2020    100.0
-        2021    110.0
-        2022    120.0
-        2023      0.0
-        2024      0.0
-        2025      0.0
-        2026      0.0
-        2027      0.0
-        2028      0.0
-        2029      0.0
-        2030      0.0
-        dtype: float64
-        >>> print(df.at[2020, "Revenue"])
-        100.0
-
-    Arguments
-    ---------
-
-    name: `str`
-        Name of the business plan.
-
-    start: `int`
-        First year of the business plan.
-
-    end: `int`
-        Last year of the business plan. """
-    if end <= start:
-        raise ValueError("'end' should be > 'start'")
-    df = pd.DataFrame(dtype='float64', index=range(start, end + 1))
-    df.bp.name = name
-    return df
 
 
 def percent_of(s2: pd.Series,
