@@ -240,9 +240,9 @@ class BPAccessor:
         Assumptions on which the business plan is based. Assumptions are
         declared by appending objects of class :class:`ExternalAssumption` or
         class :class:`HistoryBasedAssumption` to attribute `assumptions`. For
-        instance::
+        instance, if ``df`` is a DataFrame representing a business plan::
 
-          my_bp.bp.assumptions.append(ExternalAssumption(
+          df.bp.assumptions.append(ExternalAssumption(
               name="Some assumption",
               last_update=date(2020, 10, 12),
               update_every_x_year=2,
@@ -250,7 +250,20 @@ class BPAccessor:
               update_links={'source': UpdateLink("reference", "http://ref.com")})
 
     index_format: `str`, initial value is ``'%d/%m/%Y'``
-        TODO """
+        Default format string used to display business plan index values in
+        reports.
+
+        More precisely, if ``i`` is a business plan index value, its default
+        representation in reports is string::
+
+            df.bp.index_to_datetime(i).strftime(df.bp.index_format)
+
+        This default format string is used by classes
+        :class:`~business_plans.report.BPChart`,
+        :class:`~business_plans.report.LineBPChart`,
+        :class:`~business_plans.report.StackedBarBPChart`,
+        :class:`~business_plans.report.CompareBPsLineChart`, and
+        :class:`~business_plans.report.BPStatus`. """
 
     def __init__(self, df: pd.DataFrame):
         if not(df.index.is_monotonic_increasing and df.index.is_unique):
