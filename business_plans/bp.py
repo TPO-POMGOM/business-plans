@@ -15,6 +15,7 @@ Business plans are modeled using ``pandas.DataFrame`` objects:
 The ``bp`` accessor, defined by Class :class:`BPAccessor`, provides methods and
 properties applicable to such DataFrame's.
 
+
 **Example**
 
 .. code-block:: python
@@ -37,6 +38,37 @@ properties applicable to such DataFrame's.
     Freq: AS-JAN, dtype: float64
     >>> print(df.at[date(2020, 1, 1), "Revenue"])
     100.0
+
+
+**Note on indexes**
+
+While business plan indexes can be any strictly increasing series of values,
+they will in pratice be time-related values, such as ``int`` objects
+representing years, ``date`` objects representing years, quarters, or months,
+etc. Classes :class:`~business_plans.report.BPChart`,
+:class:`~business_plans.report.LineBPChart`,
+:class:`~business_plans.report.StackedBarBPChart`,
+:class:`~business_plans.report.CompareBPsLineChart`, and
+:class:`~business_plans.report.BPStatus` need a way of presenting those values
+in report elements. This is done in two steps:
+
+1. A way of converting an index value to a ``datetime`` object must be provided
+   by method :func:`~BPAccessor.index_to_datetime`. The default implementation
+   provided does no conversion, i.e. works when index values are ``datetime``
+   instances. This method must be overriden when this is not the case. For
+   instance, if index values are integers representing years::
+
+      df = pd.DataFrame(dtype='float64', index=range(2020, 2031))
+      df.bp.index_to_datetime = lambda index: date(year=index, month=1, day=1)
+
+2. Index values which have been converted to ``datetime`` objects need to be
+   formatted. All classes listed above accept a `label_format` argument, which
+   specifies how this formatting is to be made. When this argument is defaulted,
+   the format string specified by :data:`~BPAccessor.index_format` is applied,
+   by using ``strftime``. Here is how to set it up when index values are integers
+   representing years::
+
+      df.bp.index_format = '%Y'
 
 
 **Revision history**
