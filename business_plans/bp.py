@@ -141,6 +141,8 @@ class ExternalAssumption:
     update_required: `bool`
         If true, the assumption is to be reported as being out of date.
 
+        This attribute is set at the time the assumption is created.
+
 
     Arguments
     ---------
@@ -199,6 +201,8 @@ class HistoryBasedAssumption:
 
     update_required: `bool`
         If true, the assumption is to be reported as being out of date.
+
+        This attribute is set at the time the assumption is created.
 
 
     Arguments
@@ -362,7 +366,7 @@ class BPAccessor:
             Name of the business plan line. It can be either:
 
             - A non-empty string -- The new business plan line is added to the
-              business plan ``DataFrame``, as column `name`. Note that new
+              business plan DataFrame, as column `name`. Note that new
               business plan lines with history data (as opposed to business plan
               lines which are computed from other lines) should only be added
               to the business plan in this way, to ensure that data required by
@@ -370,7 +374,7 @@ class BPAccessor:
               properly intialized.
 
             - An empty string -- The new business plan line is not added to the
-              business plan ``DataFrame``.
+              business plan DataFrame.
 
         default_value: `float`, defaults to ``0``
             Value used to initialize elements in the business plan line which
@@ -413,7 +417,7 @@ class BPAccessor:
                            start: Any,
                            end: Any) -> List[float]
 
-              It returns a list of::
+              It should return a list of::
 
                 df.index.get_loc(simulation_end) - df.index.get_loc(simulation_start) + 1
 
