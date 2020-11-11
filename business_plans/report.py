@@ -205,17 +205,14 @@ class BPChart(Element):
       - When `bp_arg` receives a ``pandas.DataFrame``, `line_arg` should
         receive a list of strings naming business plan lines in the
         ``pandas.DataFrame``. The chart will plot each of these business plan
-        lines, from index ``bp_arg.bp.start`` to index ``bp_arg.bp.end``. No
-        point is plotted for index values which are not defined on a given
-        business plan line.
+        lines. Note that no  point is plotted for index values which are not
+        defined on a given business plan line.
 
       - When `bp_arg` receives a ``List[pandas.DataFrame]``, `line_arg` should
         receive a string naming a business plan line which is common to all the
         ``pandas.DataFrame``'s. The chart will plot this line for each of the
-        business plans / ``pandas.DataFrame``'s, from index
-        ``bp_arg[0].bp.start`` to index ``bp_arg[0].bp.end``. No point is
-        plotted for index values which are not defined on a given business plan
-        line.
+        business plans / ``pandas.DataFrame``'s. Note that no point is plotted
+        for index values which are not defined on a given business plan line.
 
     line_arg: `Union[str, List[str]]`
         See `bp_arg` above.
@@ -228,9 +225,16 @@ class BPChart(Element):
         Title which will be displayed at the top of the chart, as an HTML
         ``<h2>`` element.
 
-    offset_x: `int`, defaults to ``0``
-        Offset added to index values for the purpose of displaying them as
-        labels on the X axis of the chart and in the table header.
+    index_format: :data:`~business_plans.bp.Formatter`, defaults to ``None``
+        Define how index values are formatted. Index value `index`, associated
+        to business plan `bp`, will be formatted as follows, depending on the
+        type of `index_format`:
+
+        - ``None``: format value as ``index.strftime(bp.bp.index_format)``
+
+        - ``str``: format value as  ``index.strftime(index_format)``
+
+        - ``Callable[[datetime], str]``: format value as ``index_format(index)``
 
     scale: `float`, defaults to ``1.0``
         Factor by which individual values are multiplied before being plotted
@@ -238,10 +242,12 @@ class BPChart(Element):
 
     precision: `int`, defaults to ``0``
         Number of digits to which individual values are rounded (after applying
-        the scale factor) before being plotted on the chart.
+        the scale factor) before being plotted on the chart and displayed in
+        the table.
 
     fmt: `str`, defaults to ``'{:,.0f}'`` i.e. round values to 0 decimal places
-        Format string used for displaying values in the table.
+        Format string used for displaying values in the table, after `scale`
+        and `precision` have been applied.
 
     width: `str`, defaults to ``""``
         String representation of the width attribute for the HTML
@@ -289,8 +295,7 @@ class BPChart(Element):
                  line_arg: Union[str, List[str]],
                  chart_type: Literal['line', 'stacked bar'] = 'line',
                  title: str = "",
-                 label_format: Formatter = None,
-                 offset_x: int = 0,
+                 index_format: Formatter = None,
                  scale: float = 1.0,
                  precision: int = 0,
                  fmt: str = '{:,.0f}',
@@ -326,8 +331,6 @@ class BPChart(Element):
             _bp = bp_arg
             _lines = line_arg
             bp_index = _bp.index
-            # bp_start = _bp.bp.start
-            # bp_end = _bp.bp.end
             data = {line: (_bp[line] * scale).round(precision) for line in _lines}
             datasets = [dataset_js(i, line) for i, line in enumerate(_lines)]
             chart_lines = [(_bp, line, _bp[line]) for line in reversed(_lines)]
@@ -336,14 +339,12 @@ class BPChart(Element):
             _line = line_arg
             _bp = _bps[0]
             bp_index = _bp.index
-            # bp_start = _bps[0].bp.start
-            # bp_end = _bps[0].bp.end
             data = {bp.bp.name: (bp[_line] * scale).round(precision) for bp in _bps}
             datasets = [dataset_js(i, bp.bp.name) for i, bp in enumerate(_bps)]
             chart_lines = [(bp, bp.bp.name, bp[_line]) for bp in reversed(_bps)]
         else:
             raise TypeError("Invalid types for 'bp_arg' and 'line_arg'")
-        labels = [_bp.bp.index_to_str(index, label_format) for index in bp_index]
+        labels = [_bp.bp.index_to_str(index, index_format) for index in bp_index]
         stacked = 'true' if chart_type == 'stacked bar' else 'false'
         chart = Chart(datasets=",\n".join(datasets),
                       title=title,
@@ -579,7 +580,7 @@ class BPStatus(Element):
     def __init__(self,
                  bp: pd.DataFrame,
                  title: str = "",
-                 label_format: Formatter = None,
+                 index_format: Formatter = None,
                  language: Languages = 'English') -> None:
 
         def to_html_ul(strings: List[str]) -> str:
@@ -633,7 +634,7 @@ class BPStatus(Element):
                               + dataset_js(messages['Average'][language],
                                            color=2,
                                            data=[average] * n)),
-                    labels=str([bp.bp.index_to_str(index, label_format)
+                    labels=str([bp.bp.index_to_str(index, index_format)
                                 for index in bp.index[start_pos: start_pos + n]]),
                     options="""\
                 scales: {
@@ -664,9 +665,9 @@ class BPStatus(Element):
                         messages['Missing history'][language]
                         .format(name=name,
                                 most_recent=bp.bp.datetime_to_str(most_recent,
-                                                                  label_format),
+                                                                  index_format),
                                 required=bp.bp.datetime_to_str(required,
-                                                               label_format)))
+                                                               index_format)))
         summary = 'Out of date' if bp_status else 'Up to date'
         super().__init__(f"""\
     <h2>{title}</h2>
