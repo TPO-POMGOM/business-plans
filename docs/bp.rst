@@ -42,6 +42,9 @@ Data Types
 .. autodata:: Simulator
    :annotation:
 
+.. autodata:: Formatter
+   :annotation:
+
 
 Simulator function **percent_of()**
 -----------------------------------

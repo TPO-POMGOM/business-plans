@@ -18,15 +18,15 @@
 
 
 from __future__ import annotations
-from datetime import date, datetime, time
+from datetime import datetime
 import html
 from pathlib import Path
-from typing import Any, Callable, List, Optional, Union
+from typing import Any, Callable, List, Union
 
 import pandas as pd
 from typing_extensions import Literal
 
-from business_plans.bp import ExternalAssumption, HistoryBasedAssumption
+from business_plans.bp import ExternalAssumption, Formatter, HistoryBasedAssumption
 
 
 __all__ = [
@@ -52,15 +52,6 @@ CHART_COLORS = [
     '#00a950',
     '#58595b',
     '#8549ba']
-
-
-def format_label(label: datetime, fmt: Union[str, Callable[[Any], str]]) -> str:
-    if isinstance(fmt, str):
-        return label.strftime(fmt)
-    elif callable(fmt):
-        return fmt(label)
-    else:
-        raise TypeError("Expected str or Callable[[Any], str]", fmt)
 
 
 class Element:
@@ -298,7 +289,7 @@ class BPChart(Element):
                  line_arg: Union[str, List[str]],
                  chart_type: Literal['line', 'stacked bar'] = 'line',
                  title: str = "",
-                 label_format: Union[str, Callable[[Any], str]] = '{:,.0f}',
+                 label_format: Formatter = None,
                  offset_x: int = 0,
                  scale: float = 1.0,
                  precision: int = 0,
@@ -343,7 +334,8 @@ class BPChart(Element):
         elif isinstance(bp_arg, list) and isinstance(line_arg, str):
             _bps = bp_arg
             _line = line_arg
-            bp_index = _bp[0].index
+            _bp = _bps[0]
+            bp_index = _bp.index
             # bp_start = _bps[0].bp.start
             # bp_end = _bps[0].bp.end
             data = {bp.bp.name: (bp[_line] * scale).round(precision) for bp in _bps}
@@ -351,8 +343,7 @@ class BPChart(Element):
             chart_lines = [(bp, bp.bp.name, bp[_line]) for bp in reversed(_bps)]
         else:
             raise TypeError("Invalid types for 'bp_arg' and 'line_arg'")
-        # TODO: handle default None
-        labels = [format_label(label, label_format) for label in bp_index]
+        labels = [_bp.bp.index_to_str(index, label_format) for index in bp_index]
         stacked = 'true' if chart_type == 'stacked bar' else 'false'
         chart = Chart(datasets=",\n".join(datasets),
                       title=title,
@@ -588,7 +579,7 @@ class BPStatus(Element):
     def __init__(self,
                  bp: pd.DataFrame,
                  title: str = "",
-                 label_format: Optional[Union[str, Callable[[Any], str]]] = None,
+                 label_format: Formatter = None,
                  language: Languages = 'English') -> None:
 
         def to_html_ul(strings: List[str]) -> str:
@@ -611,7 +602,7 @@ class BPStatus(Element):
                             color=CHART_COLORS[color % len(CHART_COLORS)],
                             data=", ".join(str(d) for d in data)))
 
-        fmt = label_format or bp.bp.index_format
+        fmt = label_format or bp.bp.index_format  # TODO: remove
         bp_status: List[str] = []
         messages = BPStatus.messages
         for assumption in bp.bp.assumptions:
@@ -633,8 +624,6 @@ class BPStatus(Element):
                 n = len(assumption.history)
                 average = round(sum(assumption.history) / n, ndigits=1)
                 start_pos = bp.index.get_loc(assumption.start)
-                labels = [bp.bp.index_to_datetime(index)
-                          for index in bp.index[start_pos: start_pos + n]]
                 chart = Chart(
                     datasets=(dataset_js(messages['Assumption'][language],
                                          color=0,
@@ -645,8 +634,8 @@ class BPStatus(Element):
                               + dataset_js(messages['Average'][language],
                                            color=2,
                                            data=[average] * n)),
-                    labels="[" + ",".join(format_label(label, fmt)
-                                          for label in labels) + "]",
+                    labels=str([bp.bp.index_to_str(index, label_format)
+                                for index in bp.index[start_pos: start_pos + n]]),
                     options="""\
                 scales: {
                     yAxes: [{
@@ -668,14 +657,17 @@ class BPStatus(Element):
         for name in bp:
             years_of_history = bp.bp.years_of_history(name)  # TODO: rename
             if years_of_history:
+                # most_recent_index = bp.index[years_of_history - 1]
                 most_recent = bp.bp.index_to_datetime(bp.index[years_of_history - 1])
-                required = date.today() - bp.bp.max_history_lag(name)
+                required = datetime.today() - bp.bp.max_history_lag(name)
                 if most_recent < required:
                     bp_status.append(
                         messages['Missing history'][language]
                         .format(name=name,
-                                most_recent=format_label(most_recent, fmt),
-                                required=format_label(required, fmt)))
+                                most_recent=bp.bp.datetime_to_str(most_recent,
+                                                                  label_format),
+                                required=bp.bp.datetime_to_str(required,
+                                                               label_format)))
         summary = 'Out of date' if bp_status else 'Up to date'
         super().__init__(f"""\
     <h2>{title}</h2>

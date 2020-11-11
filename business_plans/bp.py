@@ -259,6 +259,12 @@ Assumption = Union[ExternalAssumption, HistoryBasedAssumption]
 Simulator = Callable[[pd.DataFrame, pd.Series, Any, Any], List[float]]
 
 
+#: Type for the `fmt` argument of :func:`~BPAccessor.datetime_to_str` and
+#: :func:`~BPAccessor.index_to_str`  =
+#: ``Optional[Union[str, Callable[[datetime], str]]]``
+Formatter = Optional[Union[str, Callable[[datetime], str]]]
+
+
 @pd.api.extensions.register_dataframe_accessor("bp")
 class BPAccessor:
     """ Pandas DataFrame accessor for business plan methods and properties.
@@ -342,6 +348,19 @@ class BPAccessor:
         else:
             raise ValueError("Index value is not a datetime instance, method "
                              "index_to_datetime() must be overriden.")
+
+    def datetime_to_str(self, index_dt: datetime, fmt: Formatter = None) -> str:
+        if fmt is None:
+            return index_dt.strftime(self.index_format)
+        elif isinstance(fmt, str):
+            return index_dt.strftime(fmt)
+        elif callable(fmt):
+            return fmt(index_dt)
+        else:
+            raise TypeError("Expected type Formatter for argument fmt, got", fmt)
+
+    def index_to_str(self, index: Any, fmt: Formatter = None) -> str:
+        return self.datetime_to_str(self.index_to_datetime(index), fmt)
 
     def line(self,
              name: str = "",
