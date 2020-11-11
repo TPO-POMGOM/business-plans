@@ -21,7 +21,7 @@ from __future__ import annotations
 from datetime import datetime
 import html
 from pathlib import Path
-from typing import Any, Callable, List, Union
+from typing import List, Union
 
 import pandas as pd
 from typing_extensions import Literal
@@ -602,7 +602,6 @@ class BPStatus(Element):
                             color=CHART_COLORS[color % len(CHART_COLORS)],
                             data=", ".join(str(d) for d in data)))
 
-        fmt = label_format or bp.bp.index_format  # TODO: remove
         bp_status: List[str] = []
         messages = BPStatus.messages
         for assumption in bp.bp.assumptions:

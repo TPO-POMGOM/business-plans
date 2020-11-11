@@ -50,9 +50,10 @@ etc. Classes :class:`~business_plans.report.BPChart`,
 :class:`~business_plans.report.StackedBarBPChart`,
 :class:`~business_plans.report.CompareBPsLineChart`, and
 :class:`~business_plans.report.BPStatus` need a way of presenting those values
-in report elements. This is done in two steps:
+in report elements. This is done by method :func:`~BPAccessor.index_to_str`,
+which requires the following:
 
-1. A way of converting an index value to a ``datetime`` object must be provided
+1. A way of converting an index value to a ``datetime`` object -- This is provided
    by method :func:`~BPAccessor.index_to_datetime`. The default implementation
    provided does no conversion, i.e. works when index values are ``datetime``
    instances. This method must be overriden when this is not the case. For
@@ -61,12 +62,10 @@ in report elements. This is done in two steps:
       df = pd.DataFrame(dtype='float64', index=range(2020, 2031))
       df.bp.index_to_datetime = lambda index: date(year=index, month=1, day=1)
 
-2. Index values which have been converted to ``datetime`` objects need to be
-   formatted. All classes listed above accept a `label_format` argument, which
-   specifies how this formatting is to be made. When this argument is defaulted,
-   the format string specified by :data:`~BPAccessor.index_format` is applied,
-   by using ``strftime``. Here is how to set it up when index values are integers
-   representing years::
+2. A default format, which is used when :func:`~BPAccessor.index_to_str` is
+   called with arg `fmt` set to ``None`` -- This is provided by
+   :data:`~BPAccessor.index_format`. Here is how to set it up when index values
+   are integers representing years::
 
       df.bp.index_format = '%Y'
 
@@ -291,20 +290,9 @@ class BPAccessor:
               update_links={'source': UpdateLink("reference", "http://ref.com")})
 
     index_format: `str`, initial value is ``'%d/%m/%Y'``
-        Default format string used to display business plan index values in
-        reports.
-
-        More precisely, if ``i`` is a business plan index value, its default
-        representation in reports is string::
-
-            df.bp.index_to_datetime(i).strftime(df.bp.index_format)
-
-        This default format string is used by classes
-        :class:`~business_plans.report.BPChart`,
-        :class:`~business_plans.report.LineBPChart`,
-        :class:`~business_plans.report.StackedBarBPChart`,
-        :class:`~business_plans.report.CompareBPsLineChart`, and
-        :class:`~business_plans.report.BPStatus`. """
+        Default format string used by methods :func:`~BPAccessor.datetime_to_str`
+        and :func:`~BPAccessor.index_to_str`, when they are called with argument
+        `fmt` set to ``None``. """
 
     def __init__(self, df: pd.DataFrame):
         if not(df.index.is_monotonic_increasing and df.index.is_unique):
@@ -340,7 +328,7 @@ class BPAccessor:
             For instance, if index values are integers representing years::
 
                 df = pd.DataFrame(dtype='float64', index=range(2020, 2031))
-                df.bp.index_to_datetime = lambda index: date(year=index, month=1, day=1)
+                df.bp.index_to_datetime = lambda index: datetime(index, 1, 1)
                 df.bp.index_format = '%Y'
         """
         if isinstance(index, datetime):
@@ -349,17 +337,46 @@ class BPAccessor:
             raise ValueError("Index value is not a datetime instance, method "
                              "index_to_datetime() must be overriden.")
 
-    def datetime_to_str(self, index_dt: datetime, fmt: Formatter = None) -> str:
+    def datetime_to_str(self, index: datetime, fmt: Formatter = None) -> str:
+        """ Format a datetime index value into a string.
+
+        Arguments
+        ---------
+
+        index: `datetime`
+            The datetime index value to be formatted into a string.
+
+        fmt: :data:`Formatter`, defaults to ``None``
+            Can have the following types:
+
+            - ``None``: the method returns ``index.strftime(self.index_format)``
+
+            - ``str``: the method returns ``index.strftime(fmt)``
+
+            - ``Callable[[datetime], str]``: the method returns ``fmt(index)``
+
+        Returns
+        -------
+
+        str
+            See argument `fmt` above. """
         if fmt is None:
-            return index_dt.strftime(self.index_format)
+            return index.strftime(self.index_format)
         elif isinstance(fmt, str):
-            return index_dt.strftime(fmt)
+            return index.strftime(fmt)
         elif callable(fmt):
-            return fmt(index_dt)
+            return fmt(index)
         else:
             raise TypeError("Expected type Formatter for argument fmt, got", fmt)
 
     def index_to_str(self, index: Any, fmt: Formatter = None) -> str:
+        """ Format an index value into a string.
+
+        Shorthand for::
+
+            self.datetime_to_str(self.index_to_datetime(index), fmt)
+
+        """
         return self.datetime_to_str(self.index_to_datetime(index), fmt)
 
     def line(self,
