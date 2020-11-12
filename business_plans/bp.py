@@ -299,7 +299,7 @@ class BPAccessor:
             raise ValueError("'bp' accessor can only be used on DataFrames's "
                              "with strictly increasing index values.")
         self._df = df
-        self._years_of_history: Dict[str, int] = {}
+        self._history_size: Dict[str, int] = {}
         self._max_history_lag: Dict[str, timedelta] = {}
         self.name = ""
         self.index_format = '%d/%m/%Y'
@@ -406,7 +406,7 @@ class BPAccessor:
               business plan lines with history data (as opposed to business plan
               lines which are computed from other lines) should only be added
               to the business plan in this way, to ensure that data required by
-              methods :func:`years_of_history` and :func:`max_history_lag` is
+              methods :func:`history_size` and :func:`max_history_lag` is
               properly intialized.
 
             - An empty string -- The new business plan line is not added to the
@@ -419,7 +419,7 @@ class BPAccessor:
         history: `Optional[Union[pandas.Series, List[float]]]`, defaults to ``None``
             When a ``pandas.Series`` or ``List[float]`` of n elements is
             specified, the first n elements of the business plan line are
-            initialised with those elements. Method :func:`years_of_history`
+            initialised with those elements. Method :func:`history_size`
             can later be used to retrieve n.
 
         simulation: `Optional[` :class:`Simulator` `]`, defaults to ``None``
@@ -483,15 +483,15 @@ class BPAccessor:
         index = self._df.index
         line = pd.Series(data=default_value, dtype='float64', index=index)
         if history is None or len(history) == 0:
-            years_of_history = 0
+            history_size = 0
         else:
             if len(history) > index.size:
                 raise ValueError(f"Argument 'history' provides {len(history)} "
                                  f"values, max {index.size} expected")
             line.iloc[:len(history)] = history
-            years_of_history = len(history)
+            history_size = len(history)
         if simulation is not None:
-            simulation_start = simulate_from or index[years_of_history]
+            simulation_start = simulate_from or index[history_size]
             if simulation_start not in index:
                 raise KeyError(simulation_start)
             simulation_end = simulate_until or index[-1]
@@ -509,11 +509,11 @@ class BPAccessor:
             line.loc[simulation_start: simulation_end] = result
         if name:
             self._df[name] = line
-            self._years_of_history[name] = years_of_history
+            self._history_size[name] = history_size
             self._max_history_lag[name] = max_history_lag
         return line
 
-    def years_of_history(self, name: str) -> int:
+    def history_size(self, name: str) -> int:
         """ Number of years of history available for a given business plan line.
 
 
@@ -532,7 +532,7 @@ class BPAccessor:
             If the `history` argument was supplied to method :func:`line` at
             the time the business plan line was created, ``len(history)`` is
             returned. Otherwise, ``0`` is returned. """
-        return self._years_of_history.get(name, 0)
+        return self._history_size.get(name, 0)
 
     def max_history_lag(self, name: str) -> timedelta:
         """ Maximum missing years of history for a given business plan line.

@@ -392,10 +392,10 @@ class BPChart(Element):
                 table.append(f"""\
             <tr>
                 <th>{line}</th>""")
-                years_of_history = bp.bp.years_of_history(line)
+                history_size = bp.bp.history_size(line)
                 sp = '&#x2007;'  # Unicode 'FIGURE SPACE', same width as digits.
                 for i, d in enumerate(bp_line):
-                    cls = ' class="history"' if i < years_of_history else ''
+                    cls = ' class="history"' if i < history_size else ''
                     value = fmt.format(d) if isinstance(d, float) else ''
                     table.append(f"                <td{cls}>{sp}{value}{sp}</td>")
                 table.append("            </tr>")
@@ -515,7 +515,7 @@ class BPStatus(Element):
                    history=[1.0, 2.0, 3.0, 4.0, 5.0],
                    max_history_lag=2)
 
-      The assumption is reported as missing historical data when the last year
+      The assumption is reported as missing historical data when the last index
       for which history is available lags behind the current year for more
       years than indicated by the `max_history_lag` argument.
 
@@ -529,6 +529,17 @@ class BPStatus(Element):
     title: `str`, defaults to ``""``
         Title which will be displayed at the top of the status report, as an
         HTML ``<h2>`` element.
+
+    index_format: :data:`~business_plans.bp.Formatter`, defaults to ``None``
+        Define how index values are formatted. Index value `index`, associated
+        to business plan `bp`, will be formatted as follows, depending on the
+        type of `index_format`:
+
+        - ``None``: format value as ``index.strftime(bp.bp.index_format)``
+
+        - ``str``: format value as  ``index.strftime(index_format)``
+
+        - ``Callable[[datetime], str]``: format value as ``index_format(index)``
 
     language: `str`, defaults to ``'English'``
         Language for the report. Can be either ``'English'`` or ``'Français'``. """
@@ -609,7 +620,7 @@ class BPStatus(Element):
             if (isinstance(assumption, ExternalAssumption)
                     and assumption.update_required):
                 update_instructions = assumption.update_instructions.format(**{
-                    key: (f'<a href="{link.url}" target="_blank">'
+                    key: (f'<a href="{html.escape(link.url)}" target="_blank">'
                           f'{html.escape(link.title)}</a>')
                     for key, link in assumption.update_links.items()})
                 bp_status.append(
@@ -655,10 +666,9 @@ class BPStatus(Element):
                         year=assumption.last_update.year)
                     + chart)
         for name in bp:
-            years_of_history = bp.bp.years_of_history(name)  # TODO: rename
-            if years_of_history:
-                # most_recent_index = bp.index[years_of_history - 1]
-                most_recent = bp.bp.index_to_datetime(bp.index[years_of_history - 1])
+            history_size = bp.bp.history_size(name)
+            if history_size:
+                most_recent = bp.bp.index_to_datetime(bp.index[history_size - 1])
                 required = datetime.today() - bp.bp.max_history_lag(name)
                 if most_recent < required:
                     bp_status.append(
