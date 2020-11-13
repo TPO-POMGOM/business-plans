@@ -695,24 +695,30 @@ class Report:
 
     title: `str`, defaults to ``""``
         Title which will be displayed at the top of the report, as an HTML
-        ``<h1>`` element, and will be used as the ``<title>`` for the HTML
-        page.
+        ``<h1>`` element, and which will be used as the ``<title>`` for the
+        HTML page.
 
     max_width: `int`, defaults to ``960``
         Maximum width in pixels in which to display the report.
 
-    prologue: `str`, see source code for the default value
-        HTML prologue to be used at the beginning of the report.
+    prologue: `str`, defaults to ``""``
+        HTML prologue to be used at the beginning of the report. When the empty
+        string is specified, it is replaced by ``Report.PROLOGUE`` (see source
+        code for more information).
 
-    chartjs: `str`, see source code for the default value
-        URL for the ChartJS package.
+    chartjs: `str`, defaults to ``""``
+        URL for the ChartJS package. When the empty string is specified, it is
+        replaced by ``Report.CHARTJS`` (see source code for more information).
 
-    epilogue: `str`, see source code for the default value
-        HTML epilogue to be used at the end the report.
+    epilogue: `str`, defaults to ``""``
+        HTML epilogue to be used at the end of the report. When the empty
+        string is specified, it is replaced by ``Report.EPILOGUE`` (see source
+        code for more information).
 
-    css: `str`, see source code for the default value
+    css: `str`, defaults to ``""``
         CSS definitions to be inserted into the prologue, in an HTML
-        ``<style>`` element.
+        ``<style>`` element. When the empty string is specified, it is replaced
+        by ``Report.CSS`` (see source code for more information).
 
     separator: `str`, defaults to ``"    <hr>\\n\\n"``
         HTML code to be inserted between report elements. """
@@ -798,17 +804,17 @@ class Report:
                  title: str = "",
                  *,
                  max_width: int = 960,
-                 prologue: str = PROLOGUE,
-                 chartjs: str = CHARTJS,
-                 epilogue: str = EPILOGUE,
-                 css: str = CSS,
+                 prologue: str = "",
+                 chartjs: str = "",
+                 epilogue: str = "",
+                 css: str = "",
                  separator: str = "    <hr>\n\n"):
-        css = css.format(max_width=max_width)
-        self.prologue = prologue.format(title=html.escape(title),
-                                        chartjs=chartjs,
-                                        max_width=max_width,
-                                        css=css)
-        self.epilogue = epilogue
+        self.prologue = (prologue or Report.PROLOGUE).format(
+            title=html.escape(title),
+            chartjs=chartjs or Report.CHARTJS,
+            max_width=max_width,
+            css=(css or Report.CSS).format(max_width=max_width))
+        self.epilogue = epilogue or Report.EPILOGUE
         self.separator = separator
         self.elements: List[Element] = []
 
