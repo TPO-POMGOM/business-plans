@@ -80,7 +80,9 @@ which requires the following:
 - 18-Oct-2020 TPO -- Initial release of v0.2.
 
 - 4-Nov-2020 TPO - Created v0.3: generalize business plan index to any strictly
-  increasing sequence. """
+  increasing sequence.
+
+- 13-Nov-2020 TPO -- Initial release of v0.3. """
 
 from __future__ import annotations
 from dataclasses import dataclass, field
