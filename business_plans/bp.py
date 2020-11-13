@@ -173,7 +173,7 @@ class ExternalAssumption:
              name="Some assumption",
              last_update=date(2020, 10, 12),
              update_every_x_year=2,
-             update_instructions="See {source} for more information."
+             update_instructions="See {source} for more information.",
              update_links={'source': UpdateLink("reference site", "http://ref.com")})
 
     update_links: `Dict[str,` :class:`UpdateLink` `]`
