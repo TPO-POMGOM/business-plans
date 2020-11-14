@@ -5,7 +5,7 @@
 - 13-Nov-2020 TPO -- Created this module. """
 
 from datetime import date, datetime, timedelta
-from typing import Any, List
+from typing import Any, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -134,7 +134,8 @@ class TestBPAccessorClass:
 
     def test_line_method_name_arg(self, bp: pd.DataFrame) -> None:
         """ Also test default value for arg `default_value`.
-            Also test default value for arg `max_history_lag`. """
+            Also test default value for arg `max_history_lag`.
+            Also test dtype and index of result. """
         bp.bp.line('New line')  # <===
         assert bp['New line'].tolist() == [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         assert bp['New line'].dtype == np.float64
@@ -151,6 +152,35 @@ class TestBPAccessorClass:
         bp.bp.line('New line', history=[1, 2, 3, 4])  # <===
         assert bp['New line'].tolist() == [1, 2, 3, 4, 0, 0, 0, 0, 0, 0]
         assert bp.bp.history_size('New line') == 4
+
+    # test history too long
+
+    @pytest.mark.parametrize('history, from_, until, result', [
+        (None, None, None, [20, 21, 22, 23, 24, 25, 26, 27, 28, 29]),
+        (None, 2025, None, [0, 0, 0, 0, 0, 25, 26, 27, 28, 29]),
+        (None, 2025, 2028, [0, 0, 0, 0, 0, 25, 26, 27, 28, 0]),
+        ([1, 2], None, None, [1, 2, 22, 23, 24, 25, 26, 27, 28, 29]),
+        ([1, 2], 2025, None, [1, 2, 0, 0, 0, 25, 26, 27, 28, 29])])
+    def test_line_method_simulation_happy_cases(
+            self,
+            history: Optional[List[float]],
+            from_: Optional[Any],
+            until: Optional[Any],
+            result: List[float]) -> None:
+
+        def simulation(df: pd.DataFrame,
+                       s: pd.Series,
+                       start: Any,
+                       end: Any) -> List[float]:
+            return list(range(int(start - 2000), int(end + 1 - 2000)))
+
+        bp = pd.DataFrame(dtype='float64', index=range(2020, 2030))
+        assert bp.bp.line(history=history,
+                          simulation=simulation,
+                          simulate_from=from_,
+                          simulate_until=until).tolist() == result  # <===
+
+    # test sim start, sim end not in index, sim end < sim start, invalid sim result
 
     def test_line_method_max_history_lag_arg(self, bp: pd.DataFrame) -> None:
         """ Also test method `max_history_lag`. """
