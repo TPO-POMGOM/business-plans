@@ -5,8 +5,9 @@
 - 13-Nov-2020 TPO -- Created this module. """
 
 from datetime import date, timedelta
-from typing import List
+from typing import Any, List
 
+import pandas as pd
 import pytest
 
 from business_plans.bp import ExternalAssumption, HistoryBasedAssumption, \
@@ -15,8 +16,8 @@ from business_plans.bp import ExternalAssumption, HistoryBasedAssumption, \
 
 class TestUpdateLinkClass:
 
-    def test_factory(self) -> None:
-        update_link = UpdateLink("reference site", "http://ref.com")
+    def test_constructor(self) -> None:
+        update_link = UpdateLink("reference site", "http://ref.com")  # <===
         assert update_link.title == "reference site"
         assert update_link.url == "http://ref.com"
 
@@ -26,10 +27,10 @@ class TestExternalAssumptionClass:
     @pytest.mark.parametrize('days, update_required', [
         (365 * 2 + 2, True),
         (365 * 2 - 2, False)])
-    def test_factory(self, days: int, update_required: bool) -> None:
+    def test_constructor(self, days: int, update_required: bool) -> None:
         update_link = UpdateLink("reference site", "http://ref.com")
         last_update = date.today() - timedelta(days=days)
-        assumption = ExternalAssumption(
+        assumption = ExternalAssumption(  # <===
             name="Some assumption",
             last_update=last_update,
             update_every_x_year=2,
@@ -49,12 +50,12 @@ class TestHistoryBasedAssumptionClass:
         (365 * 2 + 2, [1, 2, 3, 4], True),
         (365 * 2 + 2, [1, 2, 3], False),
         (365 * 2 - 2, [1, 2, 3, 4], False)])
-    def test_factory(self,
-                     days: int,
-                     history: List[float],
-                     update_required: bool) -> None:
+    def test_constructor(self,
+                         days: int,
+                         history: List[float],
+                         update_required: bool) -> None:
         last_update = date.today() - timedelta(days=days)
-        assumption = HistoryBasedAssumption(
+        assumption = HistoryBasedAssumption(  # <===
             name="Some assumption",
             value=55.0,
             history=history,
@@ -67,3 +68,21 @@ class TestHistoryBasedAssumptionClass:
         assert assumption.start == 2020
         assert assumption.update_every_x_year == 2
         assert assumption.update_required == update_required
+
+
+class TestBPAccessorClass:
+
+    def test_constructor(self) -> None:
+        bp = pd.DataFrame(index=[1, 2, 4, 5, 10])
+        assert bp.bp.name == ""  # <===
+        assert bp.bp.index_format == '%d/%m/%Y'
+        assert bp.bp.assumptions == []
+
+    @pytest.mark.parametrize('index', [
+        [1, 2, 4, 4, 10],
+        [1, 2, 4, 3, 10]])
+    def test_constructorwith_non_increasing_index_raises_error(
+            self, index: List[Any]) -> None:
+        bp = pd.DataFrame(index=index)
+        with pytest.raises(ValueError):
+            bp.bp.name  # <===
