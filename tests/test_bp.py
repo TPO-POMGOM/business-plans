@@ -10,8 +10,8 @@ from typing import Any, List
 import pandas as pd
 import pytest
 
-from business_plans.bp import ExternalAssumption, HistoryBasedAssumption, \
-    UpdateLink
+from business_plans.bp import ExternalAssumption, Formatter, \
+    HistoryBasedAssumption, UpdateLink
 
 
 @pytest.fixture(scope="module")
@@ -90,7 +90,7 @@ class TestBPAccessorClass:
     @pytest.mark.parametrize('index', [
         [1, 2, 4, 4, 10],
         [1, 2, 4, 3, 10]])
-    def test_constructorwith_non_increasing_index_raises_error(
+    def test_constructor_with_non_increasing_index_raises_error(
             self, index: List[Any]) -> None:
         bp = pd.DataFrame(index=index)
         with pytest.raises(ValueError):
@@ -105,3 +105,16 @@ class TestBPAccessorClass:
         index = 2020
         with pytest.raises(ValueError):
             bp.bp.index_to_datetime(index)  # <===
+
+    @pytest.mark.parametrize('fmt, result', [
+        (None, '02/01/2020'),
+        ('%Y/%m/%d', '2020/01/02'),
+        (lambda index: 'result', 'result')])
+    def test_datetime_to_str(
+            self, fmt: Formatter, result: str, bp: pd.DataFrame) -> None:
+        assert bp.bp.datetime_to_str(datetime(2020, 1, 2), fmt) == result  # <===
+
+    def test_datetime_to_str_with_invalid_fmt_raises_error(
+            self, bp: pd.DataFrame) -> None:
+        with pytest.raises(TypeError):
+            bp.bp.datetime_to_str(datetime(2020, 1, 2), fmt=999)  # <===
