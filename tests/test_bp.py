@@ -4,7 +4,7 @@
 
 - 13-Nov-2020 TPO -- Created this module. """
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from typing import Any, List
 
 import pandas as pd
@@ -12,6 +12,15 @@ import pytest
 
 from business_plans.bp import ExternalAssumption, HistoryBasedAssumption, \
     UpdateLink
+
+
+@pytest.fixture(scope="module")
+def bp() -> pd.DataFrame:
+    """ Module fixture - Unmutable and hidden Window instance. """
+    bp = pd.DataFrame(
+        dtype='float64',
+        index=pd.date_range(start=datetime(2020, 1, 1), periods=10, freq='YS'))
+    yield bp
 
 
 class TestUpdateLinkClass:
@@ -86,3 +95,13 @@ class TestBPAccessorClass:
         bp = pd.DataFrame(index=index)
         with pytest.raises(ValueError):
             bp.bp.name  # <===
+
+    def test_index_to_datetime_on_datetime_value(self, bp: pd.DataFrame):
+        index = datetime(2020, 1, 1)
+        assert bp.bp.index_to_datetime(index) == index  # <===
+
+    def test_index_to_datetime_on_non_datetime_value_raises_error(
+            self, bp: pd.DataFrame):
+        index = 2020
+        with pytest.raises(ValueError):
+            bp.bp.index_to_datetime(index)  # <===
