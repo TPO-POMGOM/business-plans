@@ -112,9 +112,21 @@ class TestBPAccessorClass:
         (lambda index: 'result', 'result')])
     def test_datetime_to_str(
             self, fmt: Formatter, result: str, bp: pd.DataFrame) -> None:
+        """ Test with a datetime index. int index tested by test_index_to_str() """
         assert bp.bp.datetime_to_str(datetime(2020, 1, 2), fmt) == result  # <===
 
     def test_datetime_to_str_with_invalid_fmt_raises_error(
             self, bp: pd.DataFrame) -> None:
         with pytest.raises(TypeError):
             bp.bp.datetime_to_str(datetime(2020, 1, 2), fmt=999)  # <===
+
+    @pytest.mark.parametrize('fmt', [
+        None,
+        '%Y',
+        lambda index: index.strftime('%Y')])
+    def test_index_to_str(self, fmt: Formatter) -> None:
+        """ Test with an int index. """
+        bp = pd.DataFrame(dtype='float64', index=range(2020, 2030))
+        bp.bp.index_to_datetime = lambda index: datetime(year=index, month=1, day=1)
+        bp.bp.index_format = '%Y'
+        assert bp.bp.index_to_str(2020, fmt) == '2020'  # <===
