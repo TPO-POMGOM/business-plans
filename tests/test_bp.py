@@ -7,6 +7,7 @@
 from datetime import date, datetime, timedelta
 from typing import Any, List
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -14,7 +15,7 @@ from business_plans.bp import ExternalAssumption, Formatter, \
     HistoryBasedAssumption, UpdateLink
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def bp() -> pd.DataFrame:
     """ Module fixture - Unmutable and hidden Window instance. """
     bp = pd.DataFrame(
@@ -130,3 +131,28 @@ class TestBPAccessorClass:
         bp.bp.index_to_datetime = lambda index: datetime(year=index, month=1, day=1)
         bp.bp.index_format = '%Y'
         assert bp.bp.index_to_str(2020, fmt) == '2020'  # <===
+
+    def test_line_method_name_arg(self, bp: pd.DataFrame) -> None:
+        """ Also test default value for arg `default_value`.
+            Also test default value for arg `max_history_lag`. """
+        bp.bp.line('New line')  # <===
+        assert bp['New line'].tolist() == [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        assert bp['New line'].dtype == np.float64
+        assert bp['New line'].index.equals(bp.index)
+        assert bp.bp.max_history_lag('New line') == timedelta(days=365)
+
+    def test_line_method_default_value_arg(self, bp: pd.DataFrame) -> None:
+        """ Also test default value for arg `default_value`. """
+        assert (bp.bp.line(default_value=5).tolist()
+                == [5, 5, 5, 5, 5, 5, 5, 5, 5, 5])  # <===
+
+    def test_line_method_history_arg(self, bp: pd.DataFrame) -> None:
+        """ Also test method `history_size`. """
+        bp.bp.line('New line', history=[1, 2, 3, 4])  # <===
+        assert bp['New line'].tolist() == [1, 2, 3, 4, 0, 0, 0, 0, 0, 0]
+        assert bp.bp.history_size('New line') == 4
+
+    def test_line_method_max_history_lag_arg(self, bp: pd.DataFrame) -> None:
+        """ Also test method `max_history_lag`. """
+        bp.bp.line('New line', max_history_lag=timedelta(days=100))  # <===
+        assert bp.bp.max_history_lag('New line') == timedelta(days=100)
