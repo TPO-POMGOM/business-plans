@@ -256,8 +256,10 @@ Assumption = Union[ExternalAssumption, HistoryBasedAssumption]
 
 
 #: Type for the `simulation` argument of :func:`~BPAccessor.line` =
-#: ``Callable[[pandas.DataFrame, pandas.Series, Any, Any], List[float]]``
-Simulator = Callable[[pd.DataFrame, pd.Series, Any, Any], List[float]]
+#: ``Callable[[pd.DataFrame, pd.Series, List[Any], Any, Any, int, int],
+#: List[float]]``
+Simulator = Callable[[pd.DataFrame, pd.Series, List[Any], Any, Any, int, int],
+                     List[float]]
 
 
 #: Type for the `fmt` argument of :func:`~BPAccessor.datetime_to_str` and
@@ -502,12 +504,16 @@ class BPAccessor:
             if not (simulation_start <= simulation_end):
                 raise ValueError(f"Start of simulation ({simulation_start}) "
                                  f"should be <= end of simulation ({simulation_end})")
-            simulation_length = (index.get_loc(simulation_end)
-                                 - index.get_loc(simulation_start) + 1)
-            result = simulation(self._df, line, simulation_start, simulation_end)
-            if len(result) != simulation_length:
+            start_loc = index.get_loc(simulation_start)
+            end_loc = index.get_loc(simulation_end)
+            index_values = index[start_loc: end_loc + 1]
+            # simulation_length = (index.get_loc(simulation_end)
+            #                      - index.get_loc(simulation_start) + 1)
+            result = simulation(self._df, line, index_values, simulation_start, simulation_end, start_loc, end_loc)
+            # result = simulation(self._df, line, simulation_start, simulation_end)
+            if len(result) != len(index_values):
                 raise ValueError(f"list returned by simulator should have "
-                                 f"{simulation_length} elements")
+                                 f"{len(index_values)} elements")
             line.loc[simulation_start: simulation_end] = result
         if name:
             self._df[name] = line
@@ -692,8 +698,16 @@ def percent_of(s2: pd.Series,
 
           s1.loc[i] = s2.shift(-shift, fill_value=0).loc[i] * percent """
 
-    def simulator(df: pd.DataFrame, s1: pd.Series, start: Any, end: Any) -> List[float]:
-        return list(s2.shift(-shift, fill_value=0).loc[start: end] * percent)
+    # def simulator(df: pd.DataFrame,s1: pd.Series, start: Any, end: Any) -> List[float]:
+    def simulator(df: pd.DataFrame,
+                  s1: pd.Series,
+                  index_values: List[Any],
+                  start_index: Any,
+                  end_index: Any,
+                  start_loc: int,
+                  end_loc: int) -> List[float]:
+        return list(s2.shift(-shift, fill_value=0).loc[start_index: end_index]
+                    * percent)
 
     return simulator
 
@@ -752,9 +766,16 @@ def actualise(percent: float,
 
               s.loc[i] = s.loc[i - 1] * (1 + percent) """
 
-    def simulator(df: pd.DataFrame, s: pd.Series, start: Any, end: Any) -> List[float]:
-        start_loc = s.index.get_loc(start)
-        end_loc = s.index.get_loc(end)
+    # def simulator(df: pd.DataFrame, s: pd.Series, start: Any, end: Any) -> List[float]:
+    def simulator(df: pd.DataFrame,
+                  s: pd.Series,
+                  index_values: List[Any],
+                  start_index: Any,
+                  end_index: Any,
+                  start_loc: int,
+                  end_loc: int) -> List[float]:
+        # start_loc = s.index.get_loc(start)
+        # end_loc = s.index.get_loc(end)
         if value is None and reference is not None:
             raise ValueError("Cannot specify 'reference' and default 'value'")
         if value is None and start_loc == 0:
@@ -763,7 +784,7 @@ def actualise(percent: float,
             _value = value
         else:
             if start_loc == 0:
-                raise ValueError("Invalid start index", start)
+                raise ValueError("Invalid start index", start_index)
             _value = s.iloc[start_loc - 1]
         if reference:
             _reference = s.index.get_loc(reference)
@@ -772,7 +793,7 @@ def actualise(percent: float,
                 _reference = start_loc
             else:
                 if start_loc == 0:
-                    raise ValueError("Invalid start index", start)
+                    raise ValueError("Invalid start index", start_index)
                 _reference = start_loc - 1
         return [_value * (1 + percent) ** (i - _reference)
                 for i in range(start_loc, end_loc + 1)]
@@ -809,10 +830,17 @@ def actualise_and_cumulate(s2: pd.Series, percent: float) -> Simulator:
 
     """
 
-    def simulator(df: pd.DataFrame, s1: pd.Series, start: int, end: int) -> List[float]:
+    # def simulator(df: pd.DataFrame, s1: pd.Series, start: int, end: int) -> List[float]:
+    def simulator(df: pd.DataFrame,
+                  s1: pd.Series,
+                  index_values: List[Any],
+                  start_index: Any,
+                  end_index: Any,
+                  start_loc: int,
+                  end_loc: int) -> List[float]:
         simulation = []
-        cumulated = s1.shift(1, fill_value=0).loc[start]
-        for value in s2.shift(1, fill_value=0).loc[start: end]:
+        cumulated = s1.shift(1, fill_value=0).loc[start_index]
+        for value in s2.shift(1, fill_value=0).loc[start_index: end_index]:
             cumulated = (cumulated + value) * (1 + percent)
             simulation.append(cumulated)
         return simulation
