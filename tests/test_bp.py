@@ -9,10 +9,11 @@ from typing import Any, List, Optional
 
 import numpy as np
 import pandas as pd
+from pandas.testing import assert_series_equal
 import pytest
 
 from business_plans.bp import ExternalAssumption, Formatter, \
-    HistoryBasedAssumption, UpdateLink
+    HistoryBasedAssumption, max as bp_max, min as bp_min, percent_of, UpdateLink
 
 
 @pytest.fixture(scope="function")
@@ -204,3 +205,31 @@ class TestBPAccessorClass:
         """ Also test method `max_history_lag`. """
         bp.bp.line('New line', max_history_lag=timedelta(days=100))  # <===
         assert bp.bp.max_history_lag('New line') == timedelta(days=100)
+
+
+def test_min_function() -> None:
+    assert_series_equal(
+        bp_min(pd.Series([1, 2, 3]), pd.Series([2, 3, 1]), pd.Series([3, 1, 2])),
+        pd.Series([1, 1, 1]))
+
+
+def test_max_function() -> None:
+    assert_series_equal(
+        bp_max(pd.Series([1, 2, 3]), pd.Series([2, 3, 1]), pd.Series([3, 1, 2])),
+        pd.Series([3, 3, 3]))
+
+
+@pytest.mark.parametrize('shift, result', [
+    (0, [1, 2, 3, 4]),
+    (-1, [0, 1, 2, 3]),
+    (1, [2, 3, 4, 0])])
+def test_percent_of_function(bp: pd.DataFrame,
+                             shift: int,
+                             result: List[float]) -> None:
+    index = [0, 1, 2, 3]
+    df = pd.DataFrame(index=index)
+    s1 = pd.Series([10, 20, 30, 40])
+    s2 = pd.Series([100, 200, 300, 400])
+    percent = .01
+    simulator = percent_of(s2, percent, shift)
+    assert simulator(df, s1, index, 0, 3, 0, 3) == result
