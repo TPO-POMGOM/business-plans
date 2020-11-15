@@ -148,12 +148,13 @@ class TestBPAccessorClass:
                 == [5, 5, 5, 5, 5, 5, 5, 5, 5, 5])  # <===
 
     def test_line_method_history_arg(self, bp: pd.DataFrame) -> None:
-        """ Also test method `history_size`. """
+        """ Also test method `history_size`.
+            Also test error case if `history` arg is too long.  """
         bp.bp.line('New line', history=[1, 2, 3, 4])  # <===
         assert bp['New line'].tolist() == [1, 2, 3, 4, 0, 0, 0, 0, 0, 0]
         assert bp.bp.history_size('New line') == 4
-
-    # test history too long
+        with pytest.raises(ValueError):
+            bp.bp.line(history=[1] * 11)  # <===
 
     @pytest.mark.parametrize('history, from_, until, result', [
         (None, None, None, [20, 21, 22, 23, 24, 25, 26, 27, 28, 29]),
@@ -180,7 +181,21 @@ class TestBPAccessorClass:
                           simulate_from=from_,
                           simulate_until=until).tolist() == result  # <===
 
-    # test sim start, sim end not in index, sim end < sim start, invalid sim result
+    @pytest.mark.parametrize('from_, until, error', [
+        (2019, None, KeyError),
+        (None, 2019, KeyError),
+        (2021, 2020, ValueError),
+        (None, None, ValueError)])
+    def test_line_method_simulation_error_cases(
+            self,
+            from_: Optional[Any],
+            until: Optional[Any],
+            error: Exception) -> None:
+        bp = pd.DataFrame(dtype='float64', index=range(2020, 2030))
+        with pytest.raises(error):  # type: ignore  # Help mypy
+            bp.bp.line(simulation=lambda df, s, start, end: [],
+                       simulate_from=from_,
+                       simulate_until=until)  # <===
 
     def test_line_method_max_history_lag_arg(self, bp: pd.DataFrame) -> None:
         """ Also test method `max_history_lag`. """
