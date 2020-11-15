@@ -53,14 +53,15 @@ etc. Classes :class:`~business_plans.report.BPChart`,
 in report elements. This is done by method :func:`~BPAccessor.index_to_str`,
 which requires the following:
 
-1. A way of converting an index value to a ``datetime`` object -- This is provided
-   by method :func:`~BPAccessor.index_to_datetime`. The default implementation
-   provided does no conversion, i.e. works when index values are ``datetime``
-   instances. This method must be overriden when this is not the case. For
-   instance, if index values are integers representing years::
+1. A way of converting an index value to a ``datetime`` object -- This is
+   provided by method :func:`~BPAccessor.index_to_datetime`. The default
+   implementation provided does no conversion, i.e. works only when index
+   values are ``datetime`` instances. This method must be overriden when this
+   is not the case. For instance, if index values are integers representing
+   years::
 
       df = pd.DataFrame(dtype='float64', index=range(2020, 2031))
-      df.bp.index_to_datetime = lambda index: date(year=index, month=1, day=1)
+      df.bp.index_to_datetime = lambda index: datetime(year=index, month=1, day=1)
 
 2. A default format, which is used when :func:`~BPAccessor.index_to_str` is
    called with arg `fmt` set to ``None`` -- This is provided by
@@ -82,7 +83,9 @@ which requires the following:
 - 4-Nov-2020 TPO - Created v0.3: generalize business plan index to any strictly
   increasing sequence.
 
-- 13-Nov-2020 TPO -- Initial release of v0.3. """
+- 13-Nov-2020 TPO -- Initial release of v0.3.
+
+- 15-Nov-2020 TPO -- Initial release of v0.3.1: Refactor :class:`Simulator` API. """
 
 from __future__ import annotations
 from dataclasses import dataclass, field
@@ -428,12 +431,12 @@ class BPAccessor:
 
         simulation: `Optional[` :class:`Simulator` `]`, defaults to ``None``
             When `simulation` is specified, it is used to calculate the values
-            of elements `simulation_start` to `simulation_end` (inclusive) of
+            of elements `start_index` to `end_index` (inclusive) of
             the business plan line, where:
 
-            .. _simulation_start:
+            .. _start_index:
 
-            - `simulation_start` is equal to:
+            - `start_index` is equal to:
 
                 - If argument `simulate_from` is specified: ``simulate_from``
 
@@ -442,9 +445,9 @@ class BPAccessor:
 
                 - Otherwise: ``df.index[0]``
 
-            .. _simulation_end:
+            .. _end_index:
 
-            - `simulation_end` is equal to:
+            - `end_index` is equal to:
 
                 - If argument `simulate_until` is specified: ``simulate_until``
 
@@ -454,15 +457,45 @@ class BPAccessor:
 
                 simulation(df: pandas.DataFrame,
                            s: pandas.Series,
-                           start: Any,
-                           end: Any) -> List[float]
+                           index_values: List[Any],
+                           start_index: Any,
+                           end_index: Any,
+                           start_loc: int,
+                           end_loc: int) -> List[float]
 
-              It should return a list of::
+              The function is called with the following values:
 
-                df.index.get_loc(simulation_end) - df.index.get_loc(simulation_start) + 1
+              - `df`: the ``pandas.DataFrame`` on which method :func:`line` is
+                operating.
 
-              elements, which are then assigned to elements `simulation_start`
-              to `simulation_end` of the business plan line.
+              - `s`: the ``pandas.Series`` created by method :func:`line`, on
+                which the simulation is to be performed.
+
+              - `index_values`: all index values from `start_index` to
+                `end_index` (inclusive).
+
+              - `start_index`: see above. The following is always true::
+
+                  index_values[0] == start_index
+
+              - `end_index`: see above. The following is always true::
+
+                  index_values[-1] == end_index
+
+              - `start_loc`: integer position of `start_index` in the series's
+                index. The following is always true::
+
+                  s.index[start_loc] == start_index
+
+              - `end_loc`: integer position of `end_index` in the series's
+                index. The following are always true::
+
+                  s.index[end_loc] == end_index
+                  len(index_values) == end_loc - start_loc + 1
+
+              The function should return a list of ``end_loc - start_loc + 1``
+              elements, which are then assigned to elements `start_index`
+              to `end_index` of the business plan line.
 
         simulate_from: `Optional[Any]`, defaults to ``None``
             See argument `simulation` above.
@@ -495,26 +528,25 @@ class BPAccessor:
             line.iloc[:len(history)] = history
             history_size = len(history)
         if simulation is not None:
-            simulation_start = simulate_from or index[history_size]
-            if simulation_start not in index:
-                raise KeyError(simulation_start)
-            simulation_end = simulate_until or index[-1]
-            if simulation_end not in index:
-                raise KeyError(simulation_end)
-            if not (simulation_start <= simulation_end):
-                raise ValueError(f"Start of simulation ({simulation_start}) "
-                                 f"should be <= end of simulation ({simulation_end})")
-            start_loc = index.get_loc(simulation_start)
-            end_loc = index.get_loc(simulation_end)
+            start_index = simulate_from or index[history_size]
+            if start_index not in index:
+                raise KeyError(start_index)
+            end_index = simulate_until or index[-1]
+            if end_index not in index:
+                raise KeyError(end_index)
+            if not (start_index <= end_index):
+                raise ValueError(f"Start of simulation ({start_index}) "
+                                 f"should be <= end of simulation ({end_index})")
+            start_loc = index.get_loc(start_index)
+            end_loc = index.get_loc(end_index)
             index_values = index[start_loc: end_loc + 1]
-            # simulation_length = (index.get_loc(simulation_end)
-            #                      - index.get_loc(simulation_start) + 1)
-            result = simulation(self._df, line, index_values, simulation_start, simulation_end, start_loc, end_loc)
-            # result = simulation(self._df, line, simulation_start, simulation_end)
+            result = simulation(self._df, line,
+                                index_values, start_index, end_index,
+                                start_loc, end_loc)
             if len(result) != len(index_values):
                 raise ValueError(f"list returned by simulator should have "
                                  f"{len(index_values)} elements")
-            line.loc[simulation_start: simulation_end] = result
+            line.loc[start_index: end_index] = result
         if name:
             self._df[name] = line
             self._history_size[name] = history_size
@@ -633,9 +665,10 @@ class BPAccessor:
                         f"missing from BP '{self.name}':\n"
                         + "".join(f"- {line}\n" for line in missing_from_bp))
             msg += f"\n\nUpdate reference file '{ref_file_path}'?"
-            if MessageBox(msg,
-                          "Business plan",
-                          win32con.MB_YESNO | win32con.MB_DEFBUTTON2) == win32con.IDYES:
+            if (MessageBox(msg,
+                           "Business plan",
+                           win32con.MB_YESNO | win32con.MB_DEFBUTTON2)
+                    == win32con.IDYES):
                 path = Path(ref_file_path)
                 suffix = path.suffix
                 date_time = (datetime.fromtimestamp(path.stat().st_mtime)
@@ -693,12 +726,11 @@ def percent_of(s2: pd.Series,
         Simulator function to be passed to the `simulation` argument of method
         :func:`~BPAccessor.line`. In the following, `s1` denotes the business
         plan line on which the simulation is being performed. The simulation
-        will set, for :ref:`simulation_start <simulation_start>` <= `i` <=
-        :ref:`simulation_end <simulation_end>`::
+        will set, for :ref:`start_index <start_index>` <= `i` <=
+        :ref:`end_index <end_index>`::
 
           s1.loc[i] = s2.shift(-shift, fill_value=0).loc[i] * percent """
 
-    # def simulator(df: pd.DataFrame,s1: pd.Series, start: Any, end: Any) -> List[float]:
     def simulator(df: pd.DataFrame,
                   s1: pd.Series,
                   index_values: List[Any],
@@ -743,30 +775,29 @@ def actualise(percent: float,
 
             s.loc[reference] = value
 
-          For `reference` < `i` <= :ref:`simulation_end <simulation_end>`::
+          For `reference` < `i` <= :ref:`end_index <end_index>`::
 
             s.loc[i] = s.loc[i - 1] * (1 + percent)
 
-          For :ref:`simulation_start <simulation_start>` <= `i` < `reference`::
+          For :ref:`start_index <start_index>` <= `i` < `reference`::
 
             s.loc[i] = s.loc[i + 1] / (1 + percent)
 
         - If `value` is specified and `reference` is defaulted, the
           simulation will set::
 
-            s.loc[simulation_start] = value
+            s.loc[start_index] = value
 
-          For `reference` < `i` <= :ref:`simulation_end <simulation_end>`::
+          For `reference` < `i` <= :ref:`end_index <end_index>`::
 
             s.loc[i] = s.loc[i - 1] * (1 + percent)
 
         - If both `value` and `reference` are defaulted, the simulation
-          will set, for :ref:`simulation_start <simulation_start>` <= `i` <=
-          :ref:`simulation_end <simulation_end>`::
+          will set, for :ref:`start_index <start_index>` <= `i` <=
+          :ref:`end_index <end_index>`::
 
               s.loc[i] = s.loc[i - 1] * (1 + percent) """
 
-    # def simulator(df: pd.DataFrame, s: pd.Series, start: Any, end: Any) -> List[float]:
     def simulator(df: pd.DataFrame,
                   s: pd.Series,
                   index_values: List[Any],
@@ -774,8 +805,6 @@ def actualise(percent: float,
                   end_index: Any,
                   start_loc: int,
                   end_loc: int) -> List[float]:
-        # start_loc = s.index.get_loc(start)
-        # end_loc = s.index.get_loc(end)
         if value is None and reference is not None:
             raise ValueError("Cannot specify 'reference' and default 'value'")
         if value is None and start_loc == 0:
@@ -822,15 +851,14 @@ def actualise_and_cumulate(s2: pd.Series, percent: float) -> Simulator:
         Simulator function to be passed to the `simulation` argument of method
         :func:`~BPAccessor.line`. In the following, `s1` denotes the business
         plan line on which the simulation is being performed. The simulation
-        will set, for :ref:`simulation_start <simulation_start>` <= `i` <=
-        :ref:`simulation_end <simulation_end>`::
+        will set, for :ref:`start_index <start_index>` <= `i` <=
+        :ref:`end_index <end_index>`::
 
           s1.loc[i] = (s1.shift(1, fill_value=0).loc[i]
                        + s2.shift(1, fill_value=0).loc[i]) * (1 + percent)
 
     """
 
-    # def simulator(df: pd.DataFrame, s1: pd.Series, start: int, end: int) -> List[float]:
     def simulator(df: pd.DataFrame,
                   s1: pd.Series,
                   index_values: List[Any],
