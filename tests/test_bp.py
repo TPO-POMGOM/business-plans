@@ -171,9 +171,12 @@ class TestBPAccessorClass:
 
         def simulation(df: pd.DataFrame,
                        s: pd.Series,
-                       start: Any,
-                       end: Any) -> List[float]:
-            return list(range(int(start - 2000), int(end + 1 - 2000)))
+                       index_values: List[Any],
+                       start_index: Any,
+                       end_index: Any,
+                       start_loc: int,
+                       end_loc: int) -> List[float]:
+            return list(range(int(start_index - 2000), int(end_index + 1 - 2000)))
 
         bp = pd.DataFrame(dtype='float64', index=range(2020, 2030))
         assert bp.bp.line(history=history,
@@ -193,7 +196,7 @@ class TestBPAccessorClass:
             error: Exception) -> None:
         bp = pd.DataFrame(dtype='float64', index=range(2020, 2030))
         with pytest.raises(error):  # type: ignore  # Help mypy
-            bp.bp.line(simulation=lambda df, s, start, end: [],
+            bp.bp.line(simulation=lambda *args: [],
                        simulate_from=from_,
                        simulate_until=until)  # <===
 
