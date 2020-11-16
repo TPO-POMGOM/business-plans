@@ -2,7 +2,9 @@
 
 **Revision history**
 
-- 13-Nov-2020 TPO -- Created this module. """
+- 13-Nov-2020 TPO -- Created this module.
+
+- 16-Nov-2020 TPO -- Initial release. """
 
 from datetime import date, datetime, timedelta
 from typing import Any, List, Optional
@@ -12,13 +14,14 @@ import pandas as pd
 from pandas.testing import assert_series_equal
 import pytest
 
-from business_plans.bp import actualise, ExternalAssumption, Formatter, \
-    HistoryBasedAssumption, max as bp_max, min as bp_min, percent_of, UpdateLink
+from business_plans.bp import actualise, actualise_and_cumulate, \
+    ExternalAssumption, Formatter, HistoryBasedAssumption, max as bp_max, \
+    min as bp_min, percent_of, UpdateLink
 
 
 @pytest.fixture(scope="function")
 def bp() -> pd.DataFrame:
-    """ Module fixture - Unmutable and hidden Window instance. """
+    """ Function fixture - bp instance. """
     bp = pd.DataFrame(
         dtype='float64',
         index=pd.date_range(start=datetime(2020, 1, 1), periods=10, freq='YS'))
@@ -208,13 +211,13 @@ class TestBPAccessorClass:
 
 
 def test_min_function() -> None:
-    assert_series_equal(
+    assert_series_equal(  # <===  # <===
         bp_min(pd.Series([1, 2, 3]), pd.Series([2, 3, 1]), pd.Series([3, 1, 2])),
         pd.Series([1, 1, 1]))
 
 
 def test_max_function() -> None:
-    assert_series_equal(
+    assert_series_equal(  # <===
         bp_max(pd.Series([1, 2, 3]), pd.Series([2, 3, 1]), pd.Series([3, 1, 2])),
         pd.Series([3, 3, 3]))
 
@@ -223,14 +226,14 @@ def test_max_function() -> None:
     (0, [1, 2, 3, 4]),
     (-1, [0, 1, 2, 3]),
     (1, [2, 3, 4, 0])])
-def test_percent_of_function(shift: int, result: List[float],) -> None:
+def test_percent_of_function(shift: int, result: List[float]) -> None:
     index = [2020, 2021, 2022, 2023]
     df = pd.DataFrame(index=index)
     s1 = pd.Series([10, 20, 30, 40], index=index)
     s2 = pd.Series([100, 200, 300, 400], index=index)
     percent = .01
     simulator = percent_of(s2, percent, shift)
-    assert simulator(df, s1, index, 2020, 2023, 0, 3) == result
+    assert simulator(df, s1, index, 2020, 2023, 0, 3) == result  # <===
 
 
 @pytest.mark.parametrize('value, reference, result', [
@@ -245,7 +248,7 @@ def test_actualise_function_happy_cases(value: Optional[float],
     s = pd.Series([100, 200, 300, 400, 500, 600], index=index)
     percent = .01
     simulator = actualise(percent, value, reference)
-    assert simulator(df, s, index, 2021, 2025, 1, 5) == result
+    assert simulator(df, s, index, 2021, 2025, 1, 5) == result  # <===
 
 
 @pytest.mark.parametrize('value, reference', [
@@ -259,4 +262,15 @@ def test_actualise_function_error_cases(value: Optional[float],
     percent = .01
     simulator = actualise(percent, value, reference)
     with pytest.raises(ValueError):
-        simulator(df, s, index, 2020, 2025, 0, 5)
+        simulator(df, s, index, 2020, 2025, 0, 5)  # <===
+
+
+def test_actualise_and_cumulate_function() -> None:
+    index = [2020, 2021, 2022, 2023]
+    df = pd.DataFrame(index=index)
+    s1 = pd.Series([10, 20, 30, 40], index=index)
+    s2 = pd.Series([100, 200, 300, 400], index=index)
+    percent = .01
+    simulator = actualise_and_cumulate(s2, percent)
+    assert (simulator(df, s1, index, 2020, 2023, 0, 3)  # <===
+            == [0.0, 101.0, 304.01, 610.0501])
