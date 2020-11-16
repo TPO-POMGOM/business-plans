@@ -474,22 +474,17 @@ class BPAccessor:
               - `index_values`: all index values from `start_index` to
                 `end_index` (inclusive).
 
-              - `start_index`: see above. The following is always true::
+              - `start_index`, `end_index`: see above. The following
+                expressions always evaluate to true::
 
                   index_values[0] == start_index
-
-              - `end_index`: see above. The following is always true::
-
                   index_values[-1] == end_index
 
-              - `start_loc`: integer position of `start_index` in the series's
-                index. The following is always true::
+              - `start_loc`, `end_loc`: integer position of `start_index` and
+                `end_index` in the series's index. The following expressions
+                always evaluate to true::
 
                   s.index[start_loc] == start_index
-
-              - `end_loc`: integer position of `end_index` in the series's
-                index. The following are always true::
-
                   s.index[end_loc] == end_index
                   len(index_values) == end_loc - start_loc + 1
 
@@ -805,16 +800,14 @@ def actualise(percent: float,
                   end_index: Any,
                   start_loc: int,
                   end_loc: int) -> List[float]:
-        if value is None and reference is not None:
-            raise ValueError("Cannot specify 'reference' and default 'value'")
-        if value is None and start_loc == 0:
-            raise ValueError("Cannot default 'history', 'simulate_from' and 'value'")
-        if value:
-            _value = value
-        else:
+        if value is None:
+            if reference is not None:
+                raise ValueError("Cannot specify 'reference' and default 'value'")
             if start_loc == 0:
                 raise ValueError("Invalid start index", start_index)
             _value = s.iloc[start_loc - 1]
+        else:
+            _value = value
         if reference:
             _reference = s.index.get_loc(reference)
         else:

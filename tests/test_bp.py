@@ -12,7 +12,7 @@ import pandas as pd
 from pandas.testing import assert_series_equal
 import pytest
 
-from business_plans.bp import ExternalAssumption, Formatter, \
+from business_plans.bp import actualise, ExternalAssumption, Formatter, \
     HistoryBasedAssumption, max as bp_max, min as bp_min, percent_of, UpdateLink
 
 
@@ -223,13 +223,40 @@ def test_max_function() -> None:
     (0, [1, 2, 3, 4]),
     (-1, [0, 1, 2, 3]),
     (1, [2, 3, 4, 0])])
-def test_percent_of_function(bp: pd.DataFrame,
-                             shift: int,
-                             result: List[float]) -> None:
-    index = [0, 1, 2, 3]
+def test_percent_of_function(shift: int, result: List[float],) -> None:
+    index = [2020, 2021, 2022, 2023]
     df = pd.DataFrame(index=index)
-    s1 = pd.Series([10, 20, 30, 40])
-    s2 = pd.Series([100, 200, 300, 400])
+    s1 = pd.Series([10, 20, 30, 40], index=index)
+    s2 = pd.Series([100, 200, 300, 400], index=index)
     percent = .01
     simulator = percent_of(s2, percent, shift)
-    assert simulator(df, s1, index, 0, 3, 0, 3) == result
+    assert simulator(df, s1, index, 2020, 2023, 0, 3) == result
+
+
+@pytest.mark.parametrize('value, reference, result', [
+    (None, None, [101.0, 102.01, 103.03010000000002, 104.060401, 105.10100501000001]),
+    (10, None, [10.0, 10.1, 10.201, 10.30301, 10.4060401]),
+    (10, 2023, [9.802960494069207, 9.900990099009901, 10.0, 10.1, 10.201])])
+def test_actualise_function_happy_cases(value: Optional[float],
+                                        reference: Optional[Any],
+                                        result: List[float]) -> None:
+    index = [2020, 2021, 2022, 2023, 2024, 2025]
+    df = pd.DataFrame(index=index)
+    s = pd.Series([100, 200, 300, 400, 500, 600], index=index)
+    percent = .01
+    simulator = actualise(percent, value, reference)
+    assert simulator(df, s, index, 2021, 2025, 1, 5) == result
+
+
+@pytest.mark.parametrize('value, reference', [
+    (None, None),
+    (None, 2023)])
+def test_actualise_function_error_cases(value: Optional[float],
+                                        reference: Optional[Any]) -> None:
+    index = [2020, 2021, 2022, 2023, 2024, 2025]
+    df = pd.DataFrame(index=index)
+    s = pd.Series([100, 200, 300, 400, 500, 600], index=index)
+    percent = .01
+    simulator = actualise(percent, value, reference)
+    with pytest.raises(ValueError):
+        simulator(df, s, index, 2020, 2025, 0, 5)
