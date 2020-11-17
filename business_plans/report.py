@@ -103,7 +103,7 @@ class Chart(Element):
         should start with ``[``, end with ``]``, and individual labels should
         be separated by commas.
 
-    width: `str`, defaults to ``""``
+    width: `str`, defaults to ``''``
         String representation of the width attribute for the HTML ``<canvas>``
         element on which the chart is drawn. If set to ``""``:
 
@@ -112,7 +112,7 @@ class Chart(Element):
         - Otherwise, `width` is managed automatically by ChartJS, to
           generate a responsive display.
 
-    height: `str`, defaults to ``""``
+    height: `str`, defaults to ``''``
         String representation of the height attribute for the HTML ``<canvas>``
         element on which the chart is drawn. If set to ``""``:
 
@@ -128,7 +128,7 @@ class Chart(Element):
     legend_reverse: `bool`, defaults to ``False``
         If true, the legend will show the datasets in reverse order.
 
-    options: `str`, defaults to ``""``
+    options: `str`, defaults to ``''``
         String representation of the ``options:`` part of the JavaScript code
         which will be passed to the ChartJS ``Chart`` object factory. The
         string will be automatically prefixed with ``options: {`` and
@@ -141,11 +141,11 @@ class Chart(Element):
                  title: str = "",
                  chart_type: str = 'line',
                  labels: str = "",
-                 width: str = "",
-                 height: str = "",
+                 width: str = '',
+                 height: str = '',
                  legend_position: LegendPosition = 'right',
                  legend_reverse: bool = False,
-                 options: str = "") -> None:
+                 options: str = '') -> None:
         if not width and not height:
             dimension_options = ""
         else:
