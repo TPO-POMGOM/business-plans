@@ -6,16 +6,15 @@
 
 - XX-Nov-2020 TPO -- Initial release. """
 
-from datetime import date, datetime, timedelta
-from typing import Any, List, Optional, Union
+from datetime import datetime
+from typing import List, Union
 
-import numpy as np
 import pandas as pd
-from pandas.testing import assert_series_equal
 import pytest
 from typing_extensions import Literal
-from unittest.mock import call, Mock, patch, PropertyMock
+# from unittest.mock import call, Mock, patch, PropertyMock
 
+from business_plans.bp import Formatter
 from business_plans.report import BPChart, BPStatus, Chart, CompareBPsLineChart, \
     Element, LegendPosition, LineBPChart, Report, StackedBarBPChart
 
@@ -307,4 +306,21 @@ labelString: '{y_label}' }}
 }}]
 }}""" in html)
 
-    # index_format, scale, precision, fmt
+    @pytest.mark.parametrize('index_format, labels', [
+        (None, "['01/01/2020', '01/01/2021', '01/01/2022', '01/01/2023']"),
+        ('%Y', "['2020', '2021', '2022', '2023']"),
+        (lambda dt: dt.strftime('%Y/%m/%d'),
+         "['2020/01/01', '2021/01/01', '2022/01/01', '2023/01/01']")
+    ])
+    def test_index_format_argument(
+            self,
+            index_format: Formatter,
+            labels: List[pd.DataFrame],
+            bps: List[pd.DataFrame]) -> None:
+        html = strip_spaces(BPChart(bp_arg=bps[0],
+                                    line_arg=['Line 1', 'Line 2', 'Line 3'],
+                                    index_format=index_format).html)
+        print(html)   # DEBUG
+        assert f'data: {{\nlabels: {labels}' in html
+
+    # scale, precision, fmt, table_legend
