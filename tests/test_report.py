@@ -49,7 +49,7 @@ def check_chart(chart: Chart,  # TODO reintegrate
 class TestElementClass:
 
     def test_constructor(self) -> None:
-        assert Element("Some HTML").html == "Some HTML"
+        assert Element("Some HTML").html == "Some HTML"  # <===
 
 
 class TestChartClass:
@@ -68,7 +68,7 @@ class TestChartClass:
                          legend_position: LegendPosition,
                          legend_reverse: bool,
                          options: str) -> None:
-        check_chart(Chart(datasets='some datasets',
+        check_chart(Chart(datasets='some datasets',  # <===
                           title='some title',
                           chart_type='some chart type',
                           labels='[2020, 2021, 2022]',
@@ -259,7 +259,7 @@ data: [17.0, 18.0, 19.0, 20.0]
             bp_arg = bps[0]
             chart_html = TestBPChartClass.single_bp_chart_html
             table_html = TestBPChartClass.single_bp_table_html
-        html = strip_spaces(BPChart(bp_arg=bp_arg,
+        html = strip_spaces(BPChart(bp_arg=bp_arg,  # <===
                                     line_arg=line_arg,
                                     display_chart=display_chart,
                                     display_table=display_table).html)
@@ -284,7 +284,7 @@ data: [17.0, 18.0, 19.0, 20.0]
             x_label: str,
             y_label: str,
             bps: List[pd.DataFrame]) -> None:
-        html = strip_spaces(BPChart(bp_arg=bps[0],
+        html = strip_spaces(BPChart(bp_arg=bps[0],  # <===
                                     line_arg=['Line 1', 'Line 2', 'Line 3'],
                                     chart_type=chart_type,
                                     x_label=x_label,
@@ -315,12 +315,28 @@ labelString: '{y_label}' }}
     def test_index_format_argument(
             self,
             index_format: Formatter,
-            labels: List[pd.DataFrame],
+            labels: str,
             bps: List[pd.DataFrame]) -> None:
-        html = strip_spaces(BPChart(bp_arg=bps[0],
+        html = strip_spaces(BPChart(bp_arg=bps[0],  # <===
                                     line_arg=['Line 1', 'Line 2', 'Line 3'],
                                     index_format=index_format).html)
-        print(html)   # DEBUG
         assert f'data: {{\nlabels: {labels}' in html
 
-    # scale, precision, fmt, table_legend
+    @pytest.mark.parametrize('scale, precision, data', [
+        (1.0, 0, "[10.0, 11.0, 12.0, 13.0]"),
+        (.1, 1, "[1.0, 1.1, 1.2, 1.3]"),
+        (.1, 0, "[1.0, 1.0, 1.0, 1.0]"),
+    ])
+    def test_scale_precision_arguments(
+            self,
+            scale: float,
+            precision: int,
+            data: str,
+            bps: List[pd.DataFrame]) -> None:
+        html = strip_spaces(BPChart(bp_arg=bps[0],  # <===
+                                    line_arg=['Line 1', 'Line 2', 'Line 3'],
+                                    scale=scale,
+                                    precision=precision).html)
+        assert data in html
+
+    # fmt, table_legend
