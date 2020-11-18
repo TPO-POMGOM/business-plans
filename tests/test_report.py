@@ -246,11 +246,12 @@ data: [17.0, 18.0, 19.0, 20.0]
         ('Line 1', False, True),
         ('Line 1', True, False)
     ])
-    def test_bp_arg_line_arg_display_args(self,
-                                          line_arg: Union[str, List[str]],
-                                          display_chart: bool,
-                                          display_table: bool,
-                                          bps: List[pd.DataFrame]) -> None:
+    def test_bp_arg_line_arg_display_arguments(
+            self,
+            line_arg: Union[str, List[str]],
+            display_chart: bool,
+            display_table: bool,
+            bps: List[pd.DataFrame]) -> None:
         if isinstance(line_arg, str):
             bp_arg = bps
             chart_html = TestBPChartClass.multi_bp_chart_html
@@ -271,3 +272,39 @@ data: [17.0, 18.0, 19.0, 20.0]
             assert table_html in html
         else:
             assert table_html not in html
+
+    @pytest.mark.parametrize('chart_type, x_label, y_label', [
+        ('line', "", ""),
+        ('stacked bar', "", ""),
+        ('line', "X label", ""),
+        ('line', "", "Y label")
+    ])
+    def test_chart_type_x_label_y_label_arguments(
+            self,
+            chart_type: Literal['line', 'stacked bar'],
+            x_label: str,
+            y_label: str,
+            bps: List[pd.DataFrame]) -> None:
+        html = strip_spaces(BPChart(bp_arg=bps[0],
+                                    line_arg=['Line 1', 'Line 2', 'Line 3'],
+                                    chart_type=chart_type,
+                                    x_label=x_label,
+                                    y_label=y_label).html)
+        stacked = 'true' if chart_type == 'stacked bar' else 'false'
+        assert (f"""\
+scales: {{
+xAxes: [{{
+stacked: {stacked},
+scaleLabel: {{
+display: {'true' if x_label else 'false'},
+labelString: '{x_label}' }}
+}}],
+yAxes: [{{
+stacked: {stacked},
+scaleLabel: {{
+display: {'true' if y_label else 'false'},
+labelString: '{y_label}' }}
+}}]
+}}""" in html)
+
+    # index_format, scale, precision, fmt
