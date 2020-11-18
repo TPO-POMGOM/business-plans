@@ -398,7 +398,7 @@ class BPChart(Element):
                 sp = '&#x2007;'  # Unicode 'FIGURE SPACE', same width as digits.
                 for i, d in enumerate(bp_line):
                     cls = ' class="history"' if i < history_size else ''
-                    value = fmt.format(d) if isinstance(d, float) else ''
+                    value = fmt.format(d) if type(d) in (int, float) else ''
                     table.append(f"                <td{cls}>{sp}{value}{sp}</td>")
                 table.append("            </tr>")
             table.append("""\
