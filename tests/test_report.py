@@ -343,7 +343,6 @@ labelString: '{y_label}' }}
         html = strip_spaces(BPChart(bp_arg=bps[0],  # <===
                                     line_arg=['Line 1'],
                                     fmt='{:.2f}').html)
-        print(html)
         assert '''\
 <tr>
 <th>Line 1</th>
@@ -353,4 +352,16 @@ labelString: '{y_label}' }}
 <td>&#x2007;13.00&#x2007;</td>
 </tr>''' in html
 
-    # table_legend
+    def test_table_legend_argument(self, bps: List[pd.DataFrame]) -> None:
+        html = strip_spaces(BPChart(bp_arg=bps[0],  # <===
+                                    line_arg=['Line 1'],
+                                    table_legend="Some legend").html)
+        assert '<caption>Some legend</caption>' in html
+
+    def test_display_chart_false_and_display_table_false_raise_error(
+            self, bps: List[pd.DataFrame]) -> None:
+        with pytest.raises(ValueError):
+            BPChart(bp_arg=bps[0],  # <===
+                    line_arg=['Line 1'],
+                    display_chart=False,
+                    display_table=False)
