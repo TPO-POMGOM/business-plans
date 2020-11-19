@@ -323,9 +323,9 @@ labelString: '{y_label}' }}
         assert f'data: {{\nlabels: {labels}' in html
 
     @pytest.mark.parametrize('scale, precision, data', [
-        (1.0, 0, "[10.0, 11.0, 12.0, 13.0]"),
-        (.1, 1, "[1.0, 1.1, 1.2, 1.3]"),
-        (.1, 0, "[1.0, 1.0, 1.0, 1.0]"),
+        (1.0, 0, '[10.0, 11.0, 12.0, 13.0]'),
+        (.1, 1, '[1.0, 1.1, 1.2, 1.3]'),
+        (.1, 0, '[1.0, 1.0, 1.0, 1.0]'),
     ])
     def test_scale_precision_arguments(
             self,
@@ -339,4 +339,18 @@ labelString: '{y_label}' }}
                                     precision=precision).html)
         assert data in html
 
-    # fmt, table_legend
+    def test_fmt_argument(self, bps: List[pd.DataFrame]) -> None:
+        html = strip_spaces(BPChart(bp_arg=bps[0],  # <===
+                                    line_arg=['Line 1'],
+                                    fmt='{:.2f}').html)
+        print(html)
+        assert '''\
+<tr>
+<th>Line 1</th>
+<td>&#x2007;10.00&#x2007;</td>
+<td>&#x2007;11.00&#x2007;</td>
+<td>&#x2007;12.00&#x2007;</td>
+<td>&#x2007;13.00&#x2007;</td>
+</tr>''' in html
+
+    # table_legend
