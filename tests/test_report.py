@@ -365,3 +365,8 @@ labelString: '{y_label}' }}
                     line_arg=['Line 1'],
                     display_chart=False,
                     display_table=False)
+
+    def test_unnamed_bps_raise_error(self, bps: List[pd.DataFrame]) -> None:
+        bps[0].bp.name = ""
+        with pytest.raises(ValueError):
+            BPChart(bp_arg=bps, line_arg='Line 1')  # <===

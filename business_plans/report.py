@@ -337,6 +337,8 @@ class BPChart(Element):
             datasets = [dataset_js(i, line) for i, line in enumerate(_lines)]
             chart_lines = [(_bp, line, _bp[line]) for line in reversed(_lines)]
         elif isinstance(bp_arg, list) and isinstance(line_arg, str):
+            if not all(bp.bp.name for bp in bp_arg):
+                raise ValueError("All business plans must have a bp.name set")
             _bps = bp_arg
             _line = line_arg
             _bp = _bps[0]
