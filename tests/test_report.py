@@ -6,7 +6,7 @@
 
 - XX-Nov-2020 TPO -- Initial release. """
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import List, Union
 
 import pandas as pd
@@ -14,7 +14,7 @@ import pytest
 from typing_extensions import Literal
 from unittest.mock import patch
 
-from business_plans.bp import Formatter
+from business_plans.bp import ExternalAssumption, Formatter, UpdateLink
 from business_plans.report import BPChart, BPStatus, Chart, CompareBPsLineChart, \
     Element, LegendPosition, LineBPChart, Report, StackedBarBPChart
 
@@ -381,7 +381,7 @@ class TestStackedBarBPChartClass:
         kwargs = {'title': 'Some title', 'legend_position': 'bottom'}
         with patch('business_plans.report.BPChart.__init__',
                    autospec=True) as bpchart_init:
-            chart = StackedBarBPChart(bp, lines, **kwargs)
+            chart = StackedBarBPChart(bp, lines, **kwargs)  # <===
             bpchart_init.assert_called_with(chart, bp, lines,
                                             chart_type='stacked bar', **kwargs)
 
@@ -394,7 +394,7 @@ class TestLineBPChartClass:
         kwargs = {'title': 'Some title', 'legend_position': 'bottom'}
         with patch('business_plans.report.BPChart.__init__',
                    autospec=True) as bpchart_init:
-            chart = LineBPChart(bp, lines, **kwargs)
+            chart = LineBPChart(bp, lines, **kwargs)  # <===
             bpchart_init.assert_called_with(chart, bp, lines,
                                             chart_type='line', **kwargs)
 
@@ -406,6 +406,29 @@ class TestCompareBPsLineChartClass:
         kwargs = {'title': 'Some title', 'legend_position': 'bottom'}
         with patch('business_plans.report.BPChart.__init__',
                    autospec=True) as bpchart_init:
-            chart = CompareBPsLineChart(bps, line, **kwargs)
+            chart = CompareBPsLineChart(bps, line, **kwargs)  # <===
             bpchart_init.assert_called_with(chart, bps, line,
                                             chart_type='line', **kwargs)
+
+
+class TestBPStatusClass:
+
+    @pytest.mark.parametrize('language', [('English'), ('Français')])
+    def test_external_assumptions(
+            self, language: str, bps: List[pd.DataFrame]) -> None:
+        bp = bps[0]
+        assumption = ExternalAssumption(
+            "Some assumption",
+            last_update=date(2020, 1, 1),  # Ignored, see (*) below
+            update_every_x_year=1,         # Ignored, see (*) below
+            update_instructions="See {link}",
+            update_links={'link': UpdateLink(title="Link title",
+                                             url='http://some_url')})
+        assumption.update_required = True  # (*)
+        bp.bp.assumptions.append(assumption)
+        html = strip_spaces(BPStatus(bp,  # <===
+                                     language=language).html)  # type: ignore
+        assert (
+            BPStatus.messages['Assumption needs update'][language].format(
+                name="Some assumption", day=1, month=1, year=2020)
+            + 'See <a href="http://some_url" target="_blank">Link title</a>') in html
