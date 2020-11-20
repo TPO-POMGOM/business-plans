@@ -445,11 +445,8 @@ class LineBPChart(BPChart):
 
     See :class:`BPChart` for more information. """
 
-    def __init__(self, bp: pd.DataFrame, lines: List[str], *args, **kwargs):
-        super().__init__(bp, lines, *args,  # type: ignore  # (*)
-                         chart_type='line', **kwargs)
-        # (*) This is a known mypy issue:
-        #     https://github.com/python/mypy/issues/6799#issuecomment-549673075
+    def __init__(self, bp: pd.DataFrame, lines: List[str], **kwargs):
+        super().__init__(bp, lines, chart_type='line', **kwargs)
 
 
 class CompareBPsLineChart(BPChart):

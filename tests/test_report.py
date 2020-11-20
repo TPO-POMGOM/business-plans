@@ -384,3 +384,16 @@ class TestStackedBarBPChartClass:
             chart = StackedBarBPChart(bp, lines, **kwargs)
             bpchart_init.assert_called_with(chart, bp, lines,
                                             chart_type='stacked bar', **kwargs)
+
+
+class TestLineBPChartClass:
+
+    def test_constructor(self, bps: List[pd.DataFrame]) -> None:
+        bp = bps[0]
+        lines = ['Line 1']
+        kwargs = {'title': 'Some title', 'legend_position': 'bottom'}
+        with patch('business_plans.report.BPChart.__init__',
+                   autospec=True) as bpchart_init:
+            chart = LineBPChart(bp, lines, **kwargs)
+            bpchart_init.assert_called_with(chart, bp, lines,
+                                            chart_type='line', **kwargs)
