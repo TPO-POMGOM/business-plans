@@ -14,9 +14,11 @@ import pytest
 from typing_extensions import Literal
 from unittest.mock import patch
 
-from business_plans.bp import ExternalAssumption, Formatter, UpdateLink
-from business_plans.report import BPChart, BPStatus, Chart, CompareBPsLineChart, \
-    Element, LegendPosition, LineBPChart, Report, StackedBarBPChart
+from business_plans.bp import ExternalAssumption, Formatter, \
+    HistoryBasedAssumption, UpdateLink
+from business_plans.report import BPChart, BPStatus, Chart, CHART_COLORS, \
+    CompareBPsLineChart, Element, LegendPosition, LineBPChart, Report, \
+    StackedBarBPChart
 
 
 def strip_spaces(html: str) -> str:
@@ -424,11 +426,67 @@ class TestBPStatusClass:
             update_instructions="See {link}",
             update_links={'link': UpdateLink(title="Link title",
                                              url='http://some_url')})
-        assumption.update_required = True  # (*)
         bp.bp.assumptions.append(assumption)
+
+        assumption.update_required = True  # (*)
         html = strip_spaces(BPStatus(bp,  # <===
                                      language=language).html)  # type: ignore
         assert (
             BPStatus.messages['Assumption needs update'][language].format(
                 name="Some assumption", day=1, month=1, year=2020)
             + 'See <a href="http://some_url" target="_blank">Link title</a>') in html
+
+        assumption.update_required = False  # (*)
+        html = strip_spaces(BPStatus(bp,  # <===
+                                     language=language).html)  # type: ignore
+        assert "Some assumption" not in html
+
+    @pytest.mark.parametrize('language', [('English'), ('Français')])
+    def test_history_based_assumptions(
+            self, language: str, bps: List[pd.DataFrame]) -> None:
+        bp = bps[0]
+        assumption = HistoryBasedAssumption(
+            "Some assumption",
+            value=5.3,
+            history=[1.1, 2.2, 3.3],
+            start=2020,
+            last_update=date(2020, 1, 1),  # Ignored, see (*) below
+            update_every_x_year=1)         # Ignored, see (*) below
+        bp.bp.assumptions.append(assumption)
+
+        assumption.update_required = True  # (*)
+        html = strip_spaces(BPStatus(bp,  # <===
+                                     language=language).html)  # type: ignore
+        assert (
+            BPStatus.messages['H-assumption needs update'][language].format(
+                name="Some assumption", day=1, month=1, year=2020)) in html
+        assert f'''\
+datasets: [
+{{ label: '{BPStatus.messages['Assumption'][language]}',
+backgroundColor: '{CHART_COLORS[0]}',
+borderColor: '{CHART_COLORS[0]}',
+fill: false,
+spanGaps: false,
+data: [5.3, 5.3, 5.3]
+}},
+{{ label: '{BPStatus.messages['History'][language]}',
+backgroundColor: '{CHART_COLORS[1]}',
+borderColor: '{CHART_COLORS[1]}',
+fill: false,
+spanGaps: false,
+data: [1.1, 2.2, 3.3]
+}},
+{{ label: '{BPStatus.messages['Average'][language]}',
+backgroundColor: '{CHART_COLORS[2]}',
+borderColor: '{CHART_COLORS[2]}',
+fill: false,
+spanGaps: false,
+data: [2.2, 2.2, 2.2]
+}},
+
+]''' in html
+
+        assumption.update_required = False  # (*)
+        html = strip_spaces(BPStatus(bp,  # <===
+                                     language=language).html)  # type: ignore
+        assert "Some assumption" not in html
