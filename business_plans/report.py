@@ -416,13 +416,13 @@ class StackedBarBPChart(BPChart):
 
     .. code-block:: python
 
-        StackedBarBPChart(bp, lines, *args, **kwargs)
+        StackedBarBPChart(bp, lines, **kwargs)
 
     is shorthand for:
 
     .. code-block:: python
 
-        BPChart(bp, lines, *args, chart_type='stacked bar', **kwargs)
+        BPChart(bp, lines, chart_type='stacked bar', **kwargs)
 
     See :class:`BPChart` for more information. """
 
@@ -435,13 +435,13 @@ class LineBPChart(BPChart):
 
     .. code-block:: python
 
-        LineBPChart(bp, lines, *args, **kwargs)
+        LineBPChart(bp, lines, **kwargs)
 
     is shorthand for:
 
     .. code-block:: python
 
-        BPChart(bp, lines, *args, chart_type='line', **kwargs)
+        BPChart(bp, lines, chart_type='line', **kwargs)
 
     See :class:`BPChart` for more information. """
 
@@ -454,21 +454,18 @@ class CompareBPsLineChart(BPChart):
 
     .. code-block:: python
 
-        CompareBPsLineChart(bps, line, *args, **kwargs)
+        CompareBPsLineChart(bps, line, **kwargs)
 
     is shorthand for:
 
     .. code-block:: python
 
-        BPChart(bps, line, *args, chart_type='line', **kwargs)
+        BPChart(bps, line, chart_type='line', **kwargs)
 
     See :class:`BPChart` for more information. """
 
-    def __init__(self, bps: List[pd.DataFrame], line: str, *args, **kwargs):
-        super().__init__(bps, line, *args,  # type: ignore  # (*)
-                         chart_type='line', **kwargs)
-        # (*) This is a known mypy issue:
-        #     https://github.com/python/mypy/issues/6799#issuecomment-549673075
+    def __init__(self, bps: List[pd.DataFrame], line: str, **kwargs):
+        super().__init__(bps, line, chart_type='line', **kwargs)
 
 
 Languages = Literal['English', 'Français']

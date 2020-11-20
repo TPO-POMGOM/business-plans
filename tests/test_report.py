@@ -397,3 +397,15 @@ class TestLineBPChartClass:
             chart = LineBPChart(bp, lines, **kwargs)
             bpchart_init.assert_called_with(chart, bp, lines,
                                             chart_type='line', **kwargs)
+
+
+class TestCompareBPsLineChartClass:
+
+    def test_constructor(self, bps: List[pd.DataFrame]) -> None:
+        line = 'Line 1'
+        kwargs = {'title': 'Some title', 'legend_position': 'bottom'}
+        with patch('business_plans.report.BPChart.__init__',
+                   autospec=True) as bpchart_init:
+            chart = CompareBPsLineChart(bps, line, **kwargs)
+            bpchart_init.assert_called_with(chart, bps, line,
+                                            chart_type='line', **kwargs)
