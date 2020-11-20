@@ -12,7 +12,7 @@ from typing import List, Union
 import pandas as pd
 import pytest
 from typing_extensions import Literal
-# from unittest.mock import call, Mock, patch, PropertyMock
+from unittest.mock import patch
 
 from business_plans.bp import Formatter
 from business_plans.report import BPChart, BPStatus, Chart, CompareBPsLineChart, \
@@ -44,6 +44,32 @@ def check_chart(chart: Chart,  # TODO reintegrate
     assert f"options: {{\nlegend: {{\nposition: '{legend_position}'," in html
     assert f'reverse: {"true" if legend_reverse else "false"},\n}},' in html
     assert f'{options}\n}}\n}});\n</script>' in html
+
+
+@pytest.fixture()
+def bps() -> List[pd.DataFrame]:
+
+    def year_to_datetime(year: int) -> datetime:
+        return datetime(year, 1, 1)
+
+    index = [2020, 2021, 2022, 2023]
+    bp1 = pd.DataFrame(index=index)
+    bp1.bp.name = "BP1"
+    bp1.bp.index_to_datetime = year_to_datetime
+    bp1['Line 1'] = [10., 11., 12., 13.]
+    bp1['Line 2'] = [20., 21., 22., 23.]
+    bp1['Line 3'] = [30., 31., 32., 33.]
+    bp2 = pd.DataFrame(index=index)
+    bp2.bp.name = "BP2"
+    bp2.bp.index_to_datetime = year_to_datetime
+    bp2['Line 1'] = [15, 16, 17, 18]
+    bp2['Line 2'] = [25, 26, 27, 28]
+    bp3 = pd.DataFrame(index=index)
+    bp3.bp.name = "BP3"
+    bp3.bp.index_to_datetime = year_to_datetime
+    bp3['Line 1'] = [17, 18, 19, 20]
+    bp3['Line 2'] = [27, 28, 29, 20]
+    return [bp1, bp2, bp3]
 
 
 class TestElementClass:
@@ -212,31 +238,6 @@ data: [17.0, 18.0, 19.0, 20.0]
 </tbody>
 </table>'''
 
-    @pytest.fixture()
-    def bps(self) -> List[pd.DataFrame]:
-
-        def year_to_datetime(year: int) -> datetime:
-            return datetime(year, 1, 1)
-
-        index = [2020, 2021, 2022, 2023]
-        bp1 = pd.DataFrame(index=index)
-        bp1.bp.name = "BP1"
-        bp1.bp.index_to_datetime = year_to_datetime
-        bp1['Line 1'] = [10., 11., 12., 13.]
-        bp1['Line 2'] = [20., 21., 22., 23.]
-        bp1['Line 3'] = [30., 31., 32., 33.]
-        bp2 = pd.DataFrame(index=index)
-        bp2.bp.name = "BP2"
-        bp2.bp.index_to_datetime = year_to_datetime
-        bp2['Line 1'] = [15, 16, 17, 18]
-        bp2['Line 2'] = [25, 26, 27, 28]
-        bp3 = pd.DataFrame(index=index)
-        bp3.bp.name = "BP3"
-        bp3.bp.index_to_datetime = year_to_datetime
-        bp3['Line 1'] = [17, 18, 19, 20]
-        bp3['Line 2'] = [27, 28, 29, 20]
-        return [bp1, bp2, bp3]
-
     @pytest.mark.parametrize('line_arg, display_chart, display_table', [
         (['Line 1', 'Line 2', 'Line 3'], True, True),
         (['Line 1', 'Line 2', 'Line 3'], False, True),
@@ -370,3 +371,16 @@ labelString: '{y_label}' }}
         bps[0].bp.name = ""
         with pytest.raises(ValueError):
             BPChart(bp_arg=bps, line_arg='Line 1')  # <===
+
+
+class TestStackedBarBPChartClass:
+
+    def test_constructor(self, bps: List[pd.DataFrame]) -> None:
+        bp = bps[0]
+        lines = ['Line 1']
+        kwargs = {'title': 'Some title', 'legend_position': 'bottom'}
+        with patch('business_plans.report.BPChart.__init__',
+                   autospec=True) as bpchart_init:
+            chart = StackedBarBPChart(bp, lines, **kwargs)
+            bpchart_init.assert_called_with(chart, bp, lines,
+                                            chart_type='stacked bar', **kwargs)
