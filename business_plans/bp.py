@@ -92,7 +92,7 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 import os
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, Hashable, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -539,8 +539,8 @@ class BPAccessor:
                                 index_values, start_index, end_index,
                                 start_loc, end_loc)
             if len(result) != len(index_values):
-                raise ValueError(f"list returned by simulator should have "
-                                 f"{len(index_values)} elements")
+                raise ValueError(f"Simulator returned a list with {len(result)} "
+                                 f"elements, expected {len(index_values)}")
             line.loc[start_index: end_index] = result
         if name:
             self._df[name] = line
@@ -865,5 +865,63 @@ def actualise_and_cumulate(s2: pd.Series, percent: float) -> Simulator:
             cumulated = (cumulated + value) * (1 + percent)
             simulation.append(cumulated)
         return simulation
+
+    return simulator
+
+
+def from_list(values: List[float], start: Optional[Any] = None) -> Simulator:
+
+    def simulator(df: pd.DataFrame,
+                  s1: pd.Series,
+                  index_values: List[Any],
+                  start_index: Any,
+                  end_index: Any,
+                  start_loc: int,
+                  end_loc: int) -> List[float]:
+        values_start = start or s1.index[0]
+        values_start_loc = s1.index.get_loc(values_start)
+        if not (values_start_loc <= start_loc):
+            raise ValueError(f"start ({values_start}) should be <= start_index "
+                             f"({start_index})")
+        length = end_loc - start_loc + 1
+        if not(start_loc - values_start_loc + length <= len(values)):
+            raise ValueError("Not enough elements in values")
+        return values[start_loc - values_start_loc:
+                      start_loc - values_start_loc + length]
+
+    return simulator
+
+
+def one_offs(one_offs: Dict[Hashable, float], default_value: float = 0) -> Simulator:
+
+    def simulator(df: pd.DataFrame,
+                  s1: pd.Series,
+                  index_values: List[Any],
+                  start_index: Any,
+                  end_index: Any,
+                  start_loc: int,
+                  end_loc: int) -> List[float]:
+        return [one_offs[index] if index in one_offs else default_value
+                for index in index_values]
+
+    return simulator
+
+
+def recurring(value: float,
+              start: Optional[Any] = None,
+              end: Optional[Any] = None,
+              default_value: float = 0) -> Simulator:
+
+    def simulator(df: pd.DataFrame,
+                  s1: pd.Series,
+                  index_values: List[Any],
+                  start_index: Any,
+                  end_index: Any,
+                  start_loc: int,
+                  end_loc: int) -> List[float]:
+        _start = start or s1.index[0]
+        _end = end or s1.index[-1]
+        return [value if (_start <= index <= _end) else default_value
+                for index in index_values]
 
     return simulator
