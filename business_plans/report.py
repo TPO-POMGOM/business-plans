@@ -381,7 +381,7 @@ class BPChart(Element):
             caption = (f'    <caption>{html.escape(table_legend)}</caption>'
                        if table_legend else '')
             table.append(f"""\
-    <table>
+    <table class="chart">
 {caption}
         <thead>
             <tr>
@@ -763,8 +763,7 @@ class Report:
         hr {{ margin-top: 40px; }}
 
         canvas {{ margin: auto; }}
-
-        table {{
+        table.chart {{
             display: table;
             width: {max_width}px;
             overflow: auto;
@@ -773,20 +772,20 @@ class Report:
             page-break-inside: avoid;
             margin-top: 20px;
             margin-bottom: .85em; }}
-        table tr {{
+        table.chart tr {{
             background-color: #fff;
             border-top: 1px solid #ccc; }}
-        table tr:nth-child(2n) {{ background-color: #f8f8f8; }}
-        table td, table th {{
+        table.chart tr:nth-child(2n) {{ background-color: #f8f8f8; }}
+        table.chart td, table.chart th {{
             font-size: 70%;
             padding:6px 0px;
             border:1px solid #ddd; }}
-        table th {{
+        table.chart th {{
             background-color: #777;
             color: white; }}
-        table td {{ text-align: right; }}
-        table td.history {{ background-color: #ccc; }}
-        caption {{
+        table.chart td {{ text-align: right; }}
+        table.chart td.history {{ background-color: #ccc; }}
+        table.chart caption {{
             caption-side: bottom;
             padding: 10px;
             font-size: 70%;
