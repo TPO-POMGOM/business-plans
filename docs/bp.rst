@@ -64,6 +64,12 @@ Simulator function **actualise_and_cumulate()**
 .. autofunction:: actualise_and_cumulate
 
 
+Simulator function **from_list()**
+----------------------------------
+
+.. autofunction:: from_list
+
+
 Function **min()**
 ------------------
 

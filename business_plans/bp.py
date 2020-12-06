@@ -480,6 +480,8 @@ class BPAccessor:
                   index_values[0] == start_index
                   index_values[-1] == end_index
 
+              .. _start_loc:
+
               - `start_loc`, `end_loc`: integer position of `start_index` and
                 `end_index` in the series's index. The following expressions
                 always evaluate to true::
@@ -870,6 +872,32 @@ def actualise_and_cumulate(s2: pd.Series, percent: float) -> Simulator:
 
 
 def from_list(values: List[float], start: Optional[Any] = None) -> Simulator:
+    """ Simulator: initialize a BP line from a list of values.
+
+
+    Arguments
+    ---------
+
+    values: `List[float]`
+        Values to be used to initialize the BP line.
+
+    start: `Optional[Any]`, defaults to ``None``
+        The index in the BP line for the first element in `values`. If omitted,
+        it defaults to the first index in the BP line.
+
+
+    Returns
+    -------
+
+    :data:`Simulator`
+        Simulator function to be passed to the `simulation` argument of method
+        :func:`~BPAccessor.line`. In the following, `s1` denotes the business
+        plan line on which the simulation is being performed, and
+        `values_start_loc` is the integer position corresponding to index value
+        `start`. The simulation will set, for :ref:`start_loc <start_loc>` <=
+        `i` <= :ref:`end_loc <start_loc>`::
+
+          s1.iloc[i] = values[i - values_start_loc] """
 
     def simulator(df: pd.DataFrame,
                   s1: pd.Series,
