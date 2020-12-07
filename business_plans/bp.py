@@ -483,6 +483,7 @@ class BPAccessor:
                   index_values[-1] == end_index
 
               .. _start_loc:
+              .. _end_loc:
 
               - `start_loc`, `end_loc`: integer position of `start_index` and
                 `end_index` in the series's index. The following expressions
@@ -767,34 +768,37 @@ def actualise(percent: float,
     :data:`Simulator`
         Simulator function to be passed to the `simulation` argument of method
         :func:`~BPAccessor.line`. In the following, `s` denotes the business
-        plan line on which the simulation is being performed.
+        plan line on which the simulation is being performed, and
+        `reference_loc` is the integer position corresponding to index value
+        `reference`.
 
         - If both `value` and `reference` are specified, the simulation
           will set::
 
             s.loc[reference] = value
 
-          For `reference` < `i` <= :ref:`end_index <end_index>`::
+          For `reference_loc` < `i` <= :ref:`end_loc <end_loc>`::
 
-            s.loc[i] = s.loc[i - 1] * (1 + percent)
+            s.iloc[i] = s.iloc[i - 1] * (1 + percent)
 
-          For :ref:`start_index <start_index>` <= `i` < `reference`::
+          For :ref:`start_loc <start_loc>` <= `i` < `reference_loc`::
 
-            s.loc[i] = s.loc[i + 1] / (1 + percent)
+            s.iloc[i] = s.iloc[i + 1] / (1 + percent)
 
         - If `value` is specified and `reference` is defaulted, the
           simulation will set::
 
             s.loc[start_index] = value
 
-          For `reference` < `i` <= :ref:`end_index <end_index>`::
+          For `reference_loc` < `i` <= :ref:`end_loc <end_loc>`::
 
-            s.loc[i] = s.loc[i - 1] * (1 + percent)
+            s.iloc[i] = s.iloc[i - 1] * (1 + percent)
 
         - If both `value` and `reference` are defaulted, the simulation
-          will set, for `i` in :ref:`index_values <index_values>`::
+          will set, for :ref:`start_loc <start_loc>` <= `i` <=
+          :ref:`end_loc <end_loc>`::
 
-              s.loc[i] = s.loc[i - 1] * (1 + percent) """
+              s.iloc[i] = s.iloc[i - 1] * (1 + percent) """
 
     def simulator(df: pd.DataFrame,
                   s: pd.Series,
@@ -894,7 +898,7 @@ def from_list(values: List[float], start: Optional[Any] = None) -> Simulator:
         plan line on which the simulation is being performed, and
         `values_start_loc` is the integer position corresponding to index value
         `start`. The simulation will set, for :ref:`start_loc <start_loc>` <=
-        `i` <= :ref:`end_loc <start_loc>`::
+        `i` <= :ref:`end_loc <end_loc>`::
 
           bp_line.iloc[i] = values[i - values_start_loc] """
 
