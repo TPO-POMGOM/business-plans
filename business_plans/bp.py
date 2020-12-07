@@ -471,6 +471,8 @@ class BPAccessor:
               - `s`: the ``pandas.Series`` created by method :func:`line`, on
                 which the simulation is to be performed.
 
+              .. _index_values:
+
               - `index_values`: all index values from `start_index` to
                 `end_index` (inclusive).
 
@@ -921,6 +923,32 @@ def from_list(values: List[float], start: Optional[Any] = None) -> Simulator:
 
 
 def one_offs(one_offs: Dict[Hashable, float], default_value: float = 0) -> Simulator:
+    """ Simulator: initialize a BP line with one_off values.
+
+
+    Arguments
+    ---------
+
+    one_offs: `Dict[Hashable, float]`
+        Dictionnary whose keys are indexes into the BP line and whose values
+        are used to initialize the BP line for the corresponding indexes. All
+        other values in the BP line are set to `default_value`.
+
+    default_value: `float`, defaults to ``0``
+        Default value applied to all index values in the BP line, except those
+        in ``one_offs.keys()``.
+
+
+    Returns
+    -------
+
+    :data:`Simulator`
+        Simulator function to be passed to the `simulation` argument of method
+        :func:`~BPAccessor.line`. In the following, `bp_line` denotes the
+        business plan line on which the simulation is being performed. The
+        simulation will set, for `index` in :ref:`index_values <index_values>`::
+
+          bp_line.loc[index] = one_offs.get(index, default_value) """
 
     def simulator(df: pd.DataFrame,
                   s1: pd.Series,
@@ -929,8 +957,7 @@ def one_offs(one_offs: Dict[Hashable, float], default_value: float = 0) -> Simul
                   end_index: Any,
                   start_loc: int,
                   end_loc: int) -> List[float]:
-        return [one_offs[index] if index in one_offs else default_value
-                for index in index_values]
+        return [one_offs.get(index, default_value) for index in index_values]
 
     return simulator
 

@@ -70,6 +70,12 @@ Simulator function **from_list()**
 .. autofunction:: from_list
 
 
+Simulator function **one_offs()**
+----------------------------------
+
+.. autofunction:: one_offs
+
+
 Function **min()**
 ------------------
 
