@@ -966,6 +966,40 @@ def recurring(value: float,
               start: Optional[Any] = None,
               end: Optional[Any] = None,
               default_value: float = 0) -> Simulator:
+    """ Simulator: initialize a BP line with a recurring value.
+
+
+    Arguments
+    ---------
+
+    value: `float`
+        The BP line is initialized with this value, from index `start` to index
+        `end` (inclusive).
+
+    start: `Optional[Any]`, defaults to ``None``
+        Start index for the recurring value. If omitted, it defaults to the
+        first index in the BP line.
+
+    end: `Optional[Any]`, defaults to ``None``
+        End index for the recurring value. If omitted, it defaults to the
+        last index in the BP line.
+
+    default_value: `float`, defaults to ``0``
+        Default value given to BP line elements which are not between `start`
+        and `end` (see below).
+
+
+    Returns
+    -------
+
+    :data:`Simulator`
+        Simulator function to be passed to the `simulation` argument of method
+        :func:`~BPAccessor.line`. In the following, `bp_line` denotes the
+        business plan line on which the simulation is being performed. The
+        simulation will set, for `index` in :ref:`index_values <index_values>`::
+
+          bp_line.loc[index] = value if (start <= index <= end) else default_value
+    """
 
     def simulator(df: pd.DataFrame,
                   s1: pd.Series,

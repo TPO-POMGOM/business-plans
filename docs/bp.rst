@@ -76,6 +76,12 @@ Simulator function **one_offs()**
 .. autofunction:: one_offs
 
 
+Simulator function **recurring()**
+----------------------------------
+
+.. autofunction:: recurring
+
+
 Function **min()**
 ------------------
 
