@@ -725,8 +725,7 @@ def percent_of(s2: pd.Series,
         Simulator function to be passed to the `simulation` argument of method
         :func:`~BPAccessor.line`. In the following, `s1` denotes the business
         plan line on which the simulation is being performed. The simulation
-        will set, for :ref:`start_index <start_index>` <= `i` <=
-        :ref:`end_index <end_index>`::
+        will set, for `i` in :ref:`index_values <index_values>`::
 
           s1.loc[i] = s2.shift(-shift, fill_value=0).loc[i] * percent """
 
@@ -761,6 +760,7 @@ def actualise(percent: float,
     reference: `Optional[Any]`, defaults to ``None``
         Reference period against which `value` is to be actualised.
 
+
     Returns
     -------
 
@@ -792,8 +792,7 @@ def actualise(percent: float,
             s.loc[i] = s.loc[i - 1] * (1 + percent)
 
         - If both `value` and `reference` are defaulted, the simulation
-          will set, for :ref:`start_index <start_index>` <= `i` <=
-          :ref:`end_index <end_index>`::
+          will set, for `i` in :ref:`index_values <index_values>`::
 
               s.loc[i] = s.loc[i - 1] * (1 + percent) """
 
@@ -848,12 +847,10 @@ def actualise_and_cumulate(s2: pd.Series, percent: float) -> Simulator:
         Simulator function to be passed to the `simulation` argument of method
         :func:`~BPAccessor.line`. In the following, `s1` denotes the business
         plan line on which the simulation is being performed. The simulation
-        will set, for :ref:`start_index <start_index>` <= `i` <=
-        :ref:`end_index <end_index>`::
+        will set, for `i` in :ref:`index_values <index_values>`::
 
           s1.loc[i] = (s1.shift(1, fill_value=0).loc[i]
                        + s2.shift(1, fill_value=0).loc[i]) * (1 + percent)
-
     """
 
     def simulator(df: pd.DataFrame,
@@ -893,13 +890,13 @@ def from_list(values: List[float], start: Optional[Any] = None) -> Simulator:
 
     :data:`Simulator`
         Simulator function to be passed to the `simulation` argument of method
-        :func:`~BPAccessor.line`. In the following, `s1` denotes the business
+        :func:`~BPAccessor.line`. In the following, `bp_line` denotes the business
         plan line on which the simulation is being performed, and
         `values_start_loc` is the integer position corresponding to index value
         `start`. The simulation will set, for :ref:`start_loc <start_loc>` <=
         `i` <= :ref:`end_loc <start_loc>`::
 
-          s1.iloc[i] = values[i - values_start_loc] """
+          bp_line.iloc[i] = values[i - values_start_loc] """
 
     def simulator(df: pd.DataFrame,
                   s1: pd.Series,
