@@ -105,11 +105,14 @@ if os.environ.get('READTHEDOCS', 'False') != 'True':
 __all__ = [
     'actualise',
     'actualise_and_cumulate',
+    'ExternalAssumption',
     'HistoryBasedAssumption',
+    'from_list',
     'max',
     'min',
+    'one_offs',
     'percent_of',
-    'ExternalAssumption',
+    'recurring',
     'UpdateLink',
 ]
 

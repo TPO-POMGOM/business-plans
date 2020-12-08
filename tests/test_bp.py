@@ -15,7 +15,7 @@ from pandas.testing import assert_series_equal
 import pytest
 
 from business_plans.bp import actualise, actualise_and_cumulate, \
-    ExternalAssumption, Formatter, HistoryBasedAssumption, max as bp_max, \
+    ExternalAssumption, Formatter, from_list, HistoryBasedAssumption, max as bp_max, \
     min as bp_min, percent_of, UpdateLink
 
 
@@ -274,3 +274,17 @@ def test_actualise_and_cumulate_function() -> None:
     simulator = actualise_and_cumulate(s2, percent)
     assert (simulator(df, s1, index, 2020, 2023, 0, 3)  # <===
             == [0.0, 101.0, 304.01, 610.0501])
+
+
+@pytest.mark.parametrize('values_start, start, result', [
+    (None, 2020, [0, 1, 2, 3, 4, 5]),
+    (None, 2022, [2, 3, 4, 5]),
+    (2022, 2023, [1, 2, 3])])
+def test_from_list_function_happy_cases(values_start: Optional[Any],
+                                        start: Any,
+                                        result: List[float]) -> None:
+    index = [2020, 2021, 2022, 2023, 2024, 2025]
+    df = pd.DataFrame(index=index)
+    s = pd.Series([100, 200, 300, 400, 500, 600], index=index)
+    simulator = from_list([0, 1, 2, 3, 4, 5], start=values_start)
+    assert simulator(df, s, index, start, 2025, start - 2020, 5) == result  # <===
