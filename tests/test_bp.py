@@ -288,3 +288,15 @@ def test_from_list_function_happy_cases(values_start: Optional[Any],
     s = pd.Series([100, 200, 300, 400, 500, 600], index=index)
     simulator = from_list([0, 1, 2, 3, 4, 5], start=values_start)
     assert simulator(df, s, index, start, 2025, start - 2020, 5) == result  # <===
+
+
+def test_from_list_function_error_cases() -> None:
+    index = [2020, 2021, 2022, 2023, 2024, 2025]
+    df = pd.DataFrame(index=index)
+    s = pd.Series([100, 200, 300, 400, 500, 600], index=index)
+    simulator = from_list([0, 1, 2, 3, 4, 5], start=2021)
+    with pytest.raises(ValueError):
+        simulator(df, s, index, 2020, 2025, 0, 5)  # <===
+    simulator = from_list([0, 1, 2, 3, 4], start=2020)
+    with pytest.raises(ValueError):
+        simulator(df, s, index, 2020, 2025, 0, 5)  # <===
