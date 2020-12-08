@@ -15,8 +15,8 @@ from pandas.testing import assert_series_equal
 import pytest
 
 from business_plans.bp import actualise, actualise_and_cumulate, \
-    ExternalAssumption, Formatter, from_list, HistoryBasedAssumption, max as bp_max, \
-    min as bp_min, percent_of, UpdateLink
+    ExternalAssumption, Formatter, from_list, HistoryBasedAssumption, \
+    max as bp_max, min as bp_min, one_offs, percent_of, recurring, UpdateLink
 
 
 @pytest.fixture(scope="function")
@@ -300,3 +300,11 @@ def test_from_list_function_error_cases() -> None:
     simulator = from_list([0, 1, 2, 3, 4], start=2020)
     with pytest.raises(ValueError):
         simulator(df, s, index, 2020, 2025, 0, 5)  # <===
+
+
+def test_one_offs_function() -> None:
+    index = [2020, 2021, 2022, 2023, 2024, 2025]
+    df = pd.DataFrame(index=index)
+    s = pd.Series([100, 200, 300, 400, 500, 600], index=index)
+    simulator = one_offs({2020: 0, 2022: 22, 2024: 24}, default_value=55)
+    assert simulator(df, s, [2021, 2022, 2023], 2021, 2023, 1, 3) == [55, 22, 55]  # <===
