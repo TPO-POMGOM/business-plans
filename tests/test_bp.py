@@ -308,3 +308,17 @@ def test_one_offs_function() -> None:
     s = pd.Series([100, 200, 300, 400, 500, 600], index=index)
     simulator = one_offs({2020: 0, 2022: 22, 2024: 24}, default_value=55)
     assert simulator(df, s, [2021, 2022, 2023], 2021, 2023, 1, 3) == [55, 22, 55]  # <===
+
+
+@pytest.mark.parametrize('start, end, result', [
+    (None, None, [55, 55, 55, 55]),
+    (None, 2022, [55, 55, 11, 11]),
+    (2022, None, [11, 55, 55, 55])])
+def test_recurring_function(start: Optional[Any],
+                            end: Optional[Any],
+                            result: List[float]) -> None:
+    index = [2020, 2021, 2022, 2023, 2024, 2025]
+    df = pd.DataFrame(index=index)
+    s = pd.Series([100, 200, 300, 400, 500, 600], index=index)
+    simulator = recurring(value=55, start=start, end=end, default_value=11)
+    assert simulator(df, s, [2021, 2022, 2023, 2024], 2021, 2025, 1, 4) == result  # <===
