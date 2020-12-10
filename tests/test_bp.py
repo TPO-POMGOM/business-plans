@@ -321,5 +321,5 @@ def test_recurring_function(start: Optional[Any],
     df = pd.DataFrame(index=index)
     s = pd.Series([100, 200, 300, 400, 500, 600], index=index)
     simulator = recurring(value=55, start=start, end=end, default_value=11)
-    assert False  # s
+    assert False  # ss
     assert simulator(df, s, [2021, 2022, 2023, 2024], 2021, 2025, 1, 4) == result  # <===
