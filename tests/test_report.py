@@ -167,7 +167,7 @@ data: [17.0, 18.0, 19.0, 20.0]
 }'''
 
     single_bp_table_html = '''\
-<table>
+<table class="chart">
 
 <thead>
 <tr>
@@ -204,7 +204,7 @@ data: [17.0, 18.0, 19.0, 20.0]
 </table>'''
 
     multi_bp_table_html = '''\
-<table>
+<table class="chart">
 
 <thead>
 <tr>
