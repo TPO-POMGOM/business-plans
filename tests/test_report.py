@@ -450,6 +450,8 @@ class TestBPStatusClass:
             value=5.3,
             history=[1.1, 2.2, 3.3],
             start=2020,
+            ndigits=1,
+            y_scale="y axis label",
             last_update=date(2020, 1, 1),  # Ignored, see (*) below
             update_every_x_year=1)         # Ignored, see (*) below
         bp.bp.assumptions.append(assumption)
@@ -485,6 +487,15 @@ data: [2.2, 2.2, 2.2]
 }},
 
 ]''' in html
+        assert """\
+scales: {
+yAxes: [{
+scaleLabel: {
+display: true,
+labelString: 'y axis label'
+}
+}]
+}""" in html
 
         assumption.update_required = False  # (*)
         html = strip_spaces(BPStatus(bp,  # <===

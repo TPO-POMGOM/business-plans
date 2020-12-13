@@ -239,7 +239,19 @@ class HistoryBasedAssumption:
         :class:`~business_plans.report.BPStatus` elements will report this
         assumption as being out of date and will display -- as an aid to
         decision -- a graph showing historical data, the mean for historical
-        data values, and the current value of the assumption. """
+        data values, and the current value of the assumption.
+
+    ndigits: `Optional[int]`, defaults to ``None``
+        When a :class:`~business_plans.report.BPStatus` element reports this
+        assumption as being out of date and displays a graph showing historical
+        data, the mean for historical data values, and the current value of the
+        assumption, all values are rounded by calling the built-in ``round``
+        function with the ``ndigits`` argument set to `ndigits`.
+
+    y_scale: str = ""
+        When a :class:`~business_plans.report.BPStatus` element reports this
+        assumption as being out of date and displays a graph showing historical
+        data, this string is displayed as the label for the y scale. """
 
     name: str
     value: float
@@ -247,6 +259,8 @@ class HistoryBasedAssumption:
     start: Any
     last_update: date
     update_every_x_year: float
+    ndigits: Optional[int] = None
+    y_scale: str = ""
     update_required: bool = field(init=False)
 
     def __post_init__(self):

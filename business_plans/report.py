@@ -627,30 +627,37 @@ class BPStatus(Element):
                     + update_instructions)
             if (isinstance(assumption, HistoryBasedAssumption)
                     and assumption.update_required):
+
+                def _round(x: float) -> float:
+                    return round(x, ndigits=assumption.ndigits)
+
                 n = len(assumption.history)
-                average = round(sum(assumption.history) / n, ndigits=1)
                 start_pos = bp.index.get_loc(assumption.start)
                 chart = Chart(
-                    datasets=(dataset_js(messages['Assumption'][language],
-                                         color=0,
-                                         data=[assumption.value] * n)
-                              + dataset_js(messages['History'][language],
-                                           color=1,
-                                           data=assumption.history)
-                              + dataset_js(messages['Average'][language],
-                                           color=2,
-                                           data=[average] * n)),
+                    datasets=(
+                        dataset_js(
+                            messages['Assumption'][language],
+                            color=0,
+                            data=[_round(assumption.value)] * n)
+                        + dataset_js(
+                            messages['History'][language],
+                            color=1,
+                            data=[_round(x) for x in assumption.history])
+                        + dataset_js(
+                            messages['Average'][language],
+                            color=2,
+                            data=[_round(sum(assumption.history) / n)] * n)),
                     labels=str([bp.bp.index_to_str(index, index_format)
                                 for index in bp.index[start_pos: start_pos + n]]),
-                    options="""\
-                scales: {
-                    yAxes: [{
-                        scaleLabel: {
+                    options=f"""\
+                scales: {{
+                    yAxes: [{{
+                        scaleLabel: {{
                             display: true,
-                            labelString: '%'
-                        }
-                    }]
-                }""",
+                            labelString: '{assumption.y_scale}'
+                        }}
+                    }}]
+                }}""",
                     width="800px",
                     height="150px").html
                 bp_status.append(
