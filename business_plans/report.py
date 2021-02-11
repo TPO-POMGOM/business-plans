@@ -548,6 +548,22 @@ class BPStatus(Element):
             'English': "The following assumptions are out of date:",
             'Français': "Les hypothèses suivantes ne sont plus à jour :"
         },
+        'Summary of assumptions': {
+            'English': """\
+    The business plan is built on {total_assumptions} assumptions:
+    <ul class="BPStatus">
+        <li>{history_lines} history lines</li>
+        <li>{history_assumptions} assumptions based on history</li>
+        <li>{external_assumptions} external assumptions</li>
+    </ul>\n""",
+            'Français': """\
+    Le business plan comporte {total_assumptions} hypothèses:
+    <ul class="BPStatus">
+        <li>{history_lines} lignes d'historique</li>
+        <li>{history_assumptions} hypothèses basées sur des données d'historique</li>
+        <li>{external_assumptions} hypothèses basées sur des données externes</li>
+    </ul>\n"""
+        },
         'Assumption needs update': {
             'English': "<b>{name}</b>: last updated on {day}/{month}/{year}. ",
             'Français': "<b>{name}</b> : la dernière mise à jour date du "
@@ -667,12 +683,14 @@ class BPStatus(Element):
                         month=assumption.last_update.month,
                         year=assumption.last_update.year)
                     + chart)
+        history_lines = 0
         for name in bp:
             history_size = bp.bp.history_size(name)
             if history_size:
+                history_lines += 1
                 most_recent = bp.bp.index_to_datetime(bp.index[history_size - 1])
                 required = datetime.today() - bp.bp.max_history_lag(name)
-                if most_recent < required:
+                if most_recent.year < required.year:
                     bp_status.append(
                         messages['Missing history'][language]
                         .format(name=name,
@@ -680,9 +698,24 @@ class BPStatus(Element):
                                                                   index_format),
                                 required=bp.bp.datetime_to_str(required,
                                                                index_format)))
+        history_assumptions = 0
+        external_assumptions = 0
+        for assumption in bp.bp.assumptions:
+            if isinstance(assumption, HistoryBasedAssumption):
+                history_assumptions += 1
+            if isinstance(assumption, ExternalAssumption):
+                external_assumptions += 1
+        summary_of_assumptions = (
+            messages['Summary of assumptions'][language].format(
+                total_assumptions=(
+                    history_lines + history_assumptions + external_assumptions),
+                history_lines=history_lines,
+                history_assumptions=history_assumptions,
+                external_assumptions=external_assumptions))
         summary = 'Out of date' if bp_status else 'Up to date'
         super().__init__(f"""\
     <h2>{title}</h2>
+    {summary_of_assumptions}
     <p class="BPStatus">{messages[summary][language]}</p>\n"""
                          + (to_html_ul(bp_status) if bp_status else "")
                          + "\n")

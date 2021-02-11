@@ -182,7 +182,7 @@ class ExternalAssumption:
              update_instructions="See {source} for more information.",
              update_links={'source': UpdateLink("reference site", "http://ref.com")})
 
-    update_links: `Dict[str,` :class:`UpdateLink` `]`
+    update_links: `Dict[str,` :class:`UpdateLink` `]`, defaults to ``{}``
         Web site links to be displayed in the update instructions. See
         `update_instructions` above. """
 
@@ -190,7 +190,7 @@ class ExternalAssumption:
     last_update: date
     update_every_x_year: float
     update_instructions: str
-    update_links: Dict[str, UpdateLink]
+    update_links: Dict[str, UpdateLink] = field(default_factory=dict)
     update_required: bool = field(init=False)
 
     def __post_init__(self):
